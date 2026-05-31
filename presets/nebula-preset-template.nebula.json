@@ -1,0 +1,30 @@
+{
+  "format": "nebula-studio-preset",
+  "version": 1,
+  "patch": {
+    "name": "Template Lead",
+    "category": "Lead",
+    "cutoff": 2600,
+    "resonance": 5,
+    "drive": 8,
+    "filterEnv": 28,
+    "attack": 0.04,
+    "decay": 0.48,
+    "sustain": 0.68,
+    "release": 1.2,
+    "chorus": 20,
+    "delay": 16,
+    "reverb": 20,
+    "distortion": 8,
+    "lfoShape": "sine",
+    "lfoTarget": "cutoff",
+    "lfoRate": 1.2,
+    "lfoDepth": 18,
+    "master": 62,
+    "oscillators": [
+      { "enabled": true, "wave": "sawtooth", "octave": 0, "semi": 0, "detune": -6, "level": 72, "pan": -12 },
+      { "enabled": true, "wave": "triangle", "octave": -1, "semi": 7, "detune": 5, "level": 42, "pan": 14 },
+      { "enabled": true, "wave": "sine", "octave": -2, "semi": 0, "detune": 0, "level": 24, "pan": 0 }
+    ]
+  }
+}
