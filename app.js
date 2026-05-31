@@ -5,6 +5,8 @@ const waveformColors = ['#4de5ff', '#a779ff', '#ffc868'];
 const keyboardMap = { a: 0, w: 1, s: 2, e: 3, d: 4, f: 5, t: 6, g: 7, y: 8, h: 9, u: 10, j: 11, k: 12, o: 13, l: 14, p: 15, ';': 16, "'": 17 };
 const blackNotes = new Set([1, 3, 6, 8, 10]);
 const instrumentTypes = ['Lead', 'Pad', 'Bass', 'Keys', 'Pluck', 'Arp', 'Chord', 'Texture', 'FX', 'Custom'];
+const presetFileFormat = 'nebula-studio-preset';
+const presetFileVersion = 1;
 
 const state = {
   audio: null,
@@ -13,6 +15,7 @@ const state = {
   recording: { recorder: null, chunks: [], blob: null, startedAt: 0, timer: null },
   loaderLibrary: 'all',
   loaderCategory: 'All',
+  activePatchCategory: 'Custom',
   oscillators: [
     { enabled: true, wave: 'sawtooth', octave: 0, semi: 0, detune: -6, level: 72, pan: -12 },
     { enabled: true, wave: 'triangle', octave: -1, semi: 7, detune: 5, level: 42, pan: 14 },
@@ -228,7 +231,7 @@ function stop(note) {
   updateVoiceCount();
 }
 function panic() { [...state.voices.keys()].forEach(stop); }
-function setActiveKey(note, active) { document.querySelector(`[data-note="${note}"]`)?.classList.toggle('active', active); }
+function setActiveKey(note, active) { document.querySelector(`[data-note="${note}"]`)?.classList.toggle('active', active); document.querySelector(`[data-preview-note="${note}"]`)?.classList.toggle('active', active); }
 function updateVoiceCount() { $('#voice-count').textContent = state.voices.size; }
 
 function drawWave(canvas, wave, color) {
@@ -255,10 +258,11 @@ function drawScope() {
   for (let x = 0; x < canvas.width; x += 1) { const y = state.audio ? data[Math.floor(x / canvas.width * data.length)] / 256 * canvas.height : canvas.height / 2 + Math.sin(x / 20) * 7; x ? c.lineTo(x, y) : c.moveTo(x, y); } c.stroke();
 }
 
-function buildKeyboard() {
-  const keyboard = $('#keyboard');
-  for (let note = 0; note < 25; note += 1) { const key = document.createElement('div'); key.className = `key ${blackNotes.has(note % 12) ? 'black' : 'white'}`; key.dataset.note = note; key.onpointerdown = () => play(note); key.onpointerup = () => stop(note); key.onpointerleave = () => stop(note); keyboard.appendChild(key); }
+function fillKeyboard(keyboard, count, preview = false) {
+  for (let note = 0; note < count; note += 1) { const key = document.createElement('div'); key.className = `key ${blackNotes.has(note % 12) ? 'black' : 'white'}`; key.dataset[preview ? 'previewNote' : 'note'] = note; key.onpointerdown = () => play(note); key.onpointerup = () => stop(note); key.onpointerleave = () => stop(note); keyboard.appendChild(key); }
 }
+function buildKeyboard() { fillKeyboard($('#keyboard'), 25); fillKeyboard($('#preview-keyboard'), 13, true); }
+
 function updateOutputs() {
   const outputs = { cutoff: `${Math.round(value('cutoff'))} Hz`, resonance: value('resonance').toFixed(1), drive: `${value('drive')}%`, 'filter-env': `${value('filter-env')}%`, attack: `${value('attack').toFixed(2)} s`, decay: `${value('decay').toFixed(2)} s`, sustain: `${Math.round(value('sustain') * 100)}%`, release: `${value('release').toFixed(2)} s`, 'lfo-rate': `${value('lfo-rate').toFixed(2)} Hz`, 'lfo-depth': `${value('lfo-depth')}%`, master: `${value('master')}%` };
   Object.entries(outputs).forEach(([id, text]) => $(`#${id}-out`).textContent = text);
@@ -266,13 +270,13 @@ function updateOutputs() {
 }
 function buildMatrix() { $('#matrix').innerHTML = [['LFO 1', 'FILTER CUTOFF'], ['ENV 1', 'AMP LEVEL'], ['MACRO 1', 'BRIGHTNESS']].map(([source, target]) => `<div><b>${source} → ${target}</b>ACTIVE ROUTING</div>`).join(''); }
 function loadPatch(patch) {
-  panic(); state.oscillators = patch.oscillators.map(osc => ({ ...osc })); buildOscillators();
+  panic(); state.activePatchCategory = instrumentTypes.includes(patch.category) ? patch.category : 'Custom'; state.oscillators = patch.oscillators.map(osc => ({ ...osc })); buildOscillators();
   const ids = ['cutoff', 'resonance', 'drive', 'filterEnv', 'attack', 'decay', 'sustain', 'release', 'chorus', 'delay', 'reverb', 'distortion', 'lfoRate', 'lfoDepth', 'master'];
   ids.forEach(id => { const htmlId = id.replace(/[A-Z]/g, match => `-${match.toLowerCase()}`); if ($(`#${htmlId}`) && patch[id] !== undefined) $(`#${htmlId}`).value = patch[id]; });
   $('#lfo-shape').value = patch.lfoShape; $('#lfo-target').value = patch.lfoTarget; updateOutputs();
 }
 function currentPatch(name = 'USER — Custom Patch') {
-  return { name, category: 'User', cutoff: value('cutoff'), resonance: value('resonance'), drive: value('drive'), filterEnv: value('filter-env'), attack: value('attack'), decay: value('decay'), sustain: value('sustain'), release: value('release'), chorus: value('chorus'), delay: value('delay'), reverb: value('reverb'), distortion: value('distortion'), lfoShape: $('#lfo-shape').value, lfoTarget: $('#lfo-target').value, lfoRate: value('lfo-rate'), lfoDepth: value('lfo-depth'), master: value('master'), oscillators: state.oscillators.map(osc => ({ ...osc })) };
+  return { name, category: state.activePatchCategory, cutoff: value('cutoff'), resonance: value('resonance'), drive: value('drive'), filterEnv: value('filter-env'), attack: value('attack'), decay: value('decay'), sustain: value('sustain'), release: value('release'), chorus: value('chorus'), delay: value('delay'), reverb: value('reverb'), distortion: value('distortion'), lfoShape: $('#lfo-shape').value, lfoTarget: $('#lfo-target').value, lfoRate: value('lfo-rate'), lfoDepth: value('lfo-depth'), master: value('master'), oscillators: state.oscillators.map(osc => ({ ...osc })) };
 }
 function populatePresets() {
   const select = $('#preset'); select.innerHTML = '';
@@ -287,6 +291,16 @@ function selectedPatch() { const [type, index] = $('#preset').value.split('-'); 
 const userPatchKey = 'nebula-studio-exclusive-patches';
 function getUserPatches() { return JSON.parse(localStorage.getItem(userPatchKey) || '[]').map(patch => ({ ...patch, category: instrumentTypes.includes(patch.category) ? patch.category : 'Custom' })); }
 function setUserPatches(patches) { localStorage.setItem(userPatchKey, JSON.stringify(patches)); }
+function normalizePatch(patch) {
+  if (!patch || typeof patch !== 'object' || !Array.isArray(patch.oscillators) || patch.oscillators.length !== 3) throw new Error('Preset must contain exactly three oscillators');
+  const numeric = ['cutoff', 'resonance', 'drive', 'filterEnv', 'attack', 'decay', 'sustain', 'release', 'chorus', 'delay', 'reverb', 'distortion', 'lfoRate', 'lfoDepth', 'master'];
+  if (!numeric.every(key => Number.isFinite(Number(patch[key])))) throw new Error('Preset contains invalid parameter values');
+  const waves = ['sawtooth', 'square', 'triangle', 'sine'];
+  if (!patch.oscillators.every(osc => osc && waves.includes(osc.wave) && ['octave', 'semi', 'detune', 'level', 'pan'].every(key => Number.isFinite(Number(osc[key]))))) throw new Error('Preset contains an invalid oscillator');
+  return { ...patch, name: String(patch.name || 'Imported Nebula Patch').slice(0, 80), category: instrumentTypes.includes(patch.category) ? patch.category : 'Custom', oscillators: patch.oscillators.map(osc => ({ enabled: Boolean(osc.enabled), wave: osc.wave, octave: Number(osc.octave), semi: Number(osc.semi), detune: Number(osc.detune), level: Number(osc.level), pan: Number(osc.pan) })) };
+}
+function downloadPresetFile() { const patch = normalizePatch(currentPatch($('#preset option:checked')?.textContent.trim() || 'Nebula Studio Patch')); const blob = new Blob([JSON.stringify({ format: presetFileFormat, version: presetFileVersion, patch }, null, 2)], { type: 'application/json' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${patch.name.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'nebula-preset'}.nebula.json`; link.click(); setTimeout(() => URL.revokeObjectURL(link.href), 1000); showToast('Nebula preset file exported'); }
+async function importPresetFiles(files) { let imported = 0; const saved = getUserPatches(); for (const file of files) { try { const payload = JSON.parse(await file.text()); if (payload.format !== presetFileFormat || payload.version !== presetFileVersion) throw new Error('Not a Nebula Studio preset file'); saved.push(normalizePatch(payload.patch)); imported += 1; } catch (error) { showToast(`${file.name}: ${error.message}`); } } if (imported) { setUserPatches(saved); populatePresets(); renderPresetLoader(); showToast(`${imported} Nebula preset file${imported === 1 ? '' : 's'} imported`); } $('#preset-file').value = ''; }
 function showToast(message) { const toast = $('#toast'); toast.textContent = message; toast.classList.add('show'); clearTimeout(showToast.timer); showToast.timer = setTimeout(() => toast.classList.remove('show'), 2600); }
 function allNebulaPatches() { return [...factoryPresets.map((patch, index) => ({ patch, type: 'factory', index })), ...getUserPatches().map((patch, index) => ({ patch, type: 'user', index }))]; }
 function renderPresetFolders() {
@@ -299,7 +313,8 @@ function renderPresetLoader() {
   const matches = allNebulaPatches().filter(item => (state.loaderLibrary === 'all' || state.loaderLibrary === item.type) && (category === 'All' || item.patch.category === category) && `${item.patch.name} ${item.patch.category}`.toLowerCase().includes(search));
   renderPresetFolders();
   $('#loader-count').textContent = `${matches.length} NEBULA PATCHES`;
-  $('#preset-list').innerHTML = matches.length ? matches.map(item => `<article class="preset-row"><small>${item.type === 'factory' ? String(item.index + 1).padStart(3, '0') : 'USER'}</small><b>${item.patch.name}</b><em>${item.patch.category}</em><button data-load="${item.type}-${item.index}">LOAD</button>${item.type === 'user' ? `<button class="delete-patch" data-delete="${item.index}">DELETE</button>` : '<span></span>'}</article>`).join('') : '<p>No Nebula presets match this search.</p>';
+  $('#preset-list').innerHTML = matches.length ? matches.map(item => `<article class="preset-row"><small>${item.type === 'factory' ? String(item.index + 1).padStart(3, '0') : 'USER'}</small><b>${item.patch.name}</b><em>${item.patch.category}</em><button class="audition-patch" data-audition="${item.type}-${item.index}">AUDITION</button><button data-load="${item.type}-${item.index}">LOAD</button>${item.type === 'user' ? `<button class="delete-patch" data-delete="${item.index}">DELETE</button>` : '<span></span>'}</article>`).join('') : '<p>No Nebula presets match this search.</p>';
+  $$('[data-audition]').forEach(button => button.onclick = () => { $('#preset').value = button.dataset.audition; const patch = selectedPatch(); loadPatch(patch); $('#preview-name').textContent = patch.name; showToast('Patch ready on preview keyboard'); });
   $$('[data-load]').forEach(button => button.onclick = () => { $('#preset').value = button.dataset.load; loadPatch(selectedPatch()); $('#preset-loader').close(); showToast('Nebula preset loaded'); });
   $$('[data-delete]').forEach(button => button.onclick = () => { const saved = getUserPatches(); saved.splice(Number(button.dataset.delete), 1); setUserPatches(saved); populatePresets(); renderPresetLoader(); showToast('Custom preset deleted'); });
 }
@@ -342,6 +357,9 @@ $('#macro-grit').oninput = event => { $('#distortion-on').checked = true; $('#di
 $('#open-loader').onclick = openPresetLoader;
 $('#close-loader').onclick = () => $('#preset-loader').close();
 $('#preset-search').oninput = renderPresetLoader;
+$('#import-preset').onclick = () => $('#preset-file').click();
+$('#preset-file').onchange = event => importPresetFiles([...event.target.files]);
+$('#export-preset').onclick = downloadPresetFile;
 $('#preset-category').onchange = event => { state.loaderCategory = event.target.value; renderPresetLoader(); };
 $$('.library-tab').forEach(button => button.onclick = () => { $$('.library-tab').forEach(tab => tab.classList.toggle('active', tab === button)); state.loaderLibrary = button.dataset.library; renderPresetLoader(); });
 $('#record').onclick = startRecording;

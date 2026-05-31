@@ -122,6 +122,8 @@
     <div class="loader-toolbar">
       <input id="preset-search" type="search" placeholder="Search Nebula presets…">
       <select id="preset-category"><option value="All">ALL CATEGORIES</option></select>
+      <button id="import-preset">IMPORT FILE</button><input id="preset-file" type="file" accept=".json,.nebula.json,application/json" multiple hidden>
+      <button id="export-preset">EXPORT CURRENT</button>
       <span id="loader-count"></span>
     </div>
     <div class="loader-layout">
@@ -132,6 +134,10 @@
       </aside>
       <div class="preset-list" id="preset-list"></div>
     </div>
+    <section class="loader-preview">
+      <div><small>IN-LOADER AUDITION</small><b id="preview-name">CURRENT PATCH</b><span>Click AUDITION beside a preset, then play here.</span></div>
+      <div class="preview-keyboard" id="preview-keyboard" aria-label="Preset preview keyboard"></div>
+    </section>
   </dialog>
   <div id="toast" class="toast" role="status"></div>
   <script src="app.js"></script>

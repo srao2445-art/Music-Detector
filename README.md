@@ -26,3 +26,48 @@ Click **PRESET LOADER** to open Nebula Studio's in-app sound library. Search by 
 Click **RECORD**, perform with the synth, and click **STOP**. Click **EXPORT AUDIO** to download the captured take. Recording is connected directly to Nebula Studio's master output, so it captures this synth only and does not request microphone access. The download uses the encoded audio format supported by your browser, normally `.webm` or `.ogg` with Opus audio.
 
 Nebula Studio is an original browser synth. It does not include or redistribute proprietary Serum presets or assets.
+
+## Import and export Nebula preset files
+
+The loader accepts portable `.nebula.json` files created specifically for Nebula Studio. Open **LOAD PRESET**, click **IMPORT FILE**, and select one or more compatible files from your device. Imported sounds are validated and stored in **MY SAVED PATCHES**. Unrelated JSON files are rejected. Use **EXPORT CURRENT** to download the currently edited sound as a portable Nebula file.
+
+Each portable file uses this versioned envelope:
+
+```json
+{
+  "format": "nebula-studio-preset",
+  "version": 1,
+  "patch": {
+    "name": "My Lead",
+    "category": "Lead",
+    "cutoff": 2600,
+    "resonance": 5,
+    "drive": 8,
+    "filterEnv": 28,
+    "attack": 0.04,
+    "decay": 0.48,
+    "sustain": 0.68,
+    "release": 1.2,
+    "chorus": 20,
+    "delay": 16,
+    "reverb": 20,
+    "distortion": 8,
+    "lfoShape": "sine",
+    "lfoTarget": "cutoff",
+    "lfoRate": 1.2,
+    "lfoDepth": 18,
+    "master": 62,
+    "oscillators": [
+      { "enabled": true, "wave": "sawtooth", "octave": 0, "semi": 0, "detune": -6, "level": 72, "pan": -12 },
+      { "enabled": true, "wave": "triangle", "octave": -1, "semi": 7, "detune": 5, "level": 42, "pan": 14 },
+      { "enabled": true, "wave": "sine", "octave": -2, "semi": 0, "detune": 0, "level": 24, "pan": 0 }
+    ]
+  }
+}
+```
+
+To create preset files without hand-writing JSON, customize a sound in Nebula Studio and click **EXPORT CURRENT** inside the loader. To generate preset packs in code, copy `presets/nebula-preset-template.nebula.json`, edit its values, or adapt the `makePatch()` factory-preset shape in `app.js`; keep `format` set to `nebula-studio-preset`, `version` set to `1`, and include exactly three validated oscillators.
+
+## Preview sounds inside the loader
+
+Click **AUDITION** beside any preset to apply it without closing the loader, then use the compact preview keyboard at the bottom of the dialog. Click **LOAD** when you want to close the loader and keep working with that sound in the main synthesizer.
