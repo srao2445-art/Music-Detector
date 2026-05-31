@@ -15,8 +15,9 @@
     <header class="topbar">
       <div class="brand"><span class="brand-mark">N</span><div><b>NOCTURNE</b><small>HYBRID WAVETABLE INSTRUMENT</small></div></div>
       <div class="preset-strip">
-        <button class="icon-btn" id="prevPreset">‹</button><button class="icon-btn" id="nextPreset">›</button>
-        <button class="preset-name" id="presetToggle"><small>PRESET</small><b id="activePreset">INIT / SILVER HORIZON</b><span>⌄</span></button>
+        <button class="icon-btn" id="prevPreset" aria-label="Previous preset">‹</button><button class="icon-btn" id="nextPreset" aria-label="Next preset">›</button>
+        <button class="preset-name" id="presetToggle" aria-expanded="false" aria-controls="quickPresetMenu"><small>PRESET</small><b id="activePreset">SILVER HORIZON</b><span>⌄</span></button>
+        <div class="quick-preset-menu" id="quickPresetMenu" hidden></div>
       </div>
       <div class="master-strip">
         <div><small>VOICES</small><b id="voiceCount">00</b></div>
@@ -94,7 +95,7 @@
       <section class="page" id="presets-page">
         <div class="section-heading"><div><small>LIBRARY</small><h1>PRESET BROWSER</h1></div><p>Save your patches locally or move them between devices as JSON files</p></div>
         <div class="preset-browser">
-          <aside class="preset-sidebar"><label class="search"><span>⌕</span><input id="presetSearch" placeholder="Search presets"></label><h4>CATEGORIES</h4><button class="category active">ALL PATCHES <b>12</b></button><button class="category">BASSES <b>03</b></button><button class="category">LEADS <b>03</b></button><button class="category">PADS <b>02</b></button><button class="category">TEXTURES <b>04</b></button><div class="preset-actions"><button id="exportPreset">EXPORT JSON</button><label>IMPORT JSON<input type="file" id="importPreset" accept="application/json"></label></div></aside>
+          <aside class="preset-sidebar"><label class="search"><span>⌕</span><input id="presetSearch" placeholder="Search presets"></label><h4>CATEGORIES</h4><button class="category active" data-category="ALL">ALL PATCHES <b>12</b></button><button class="category" data-category="BASS">BASSES <b>03</b></button><button class="category" data-category="LEAD">LEADS <b>03</b></button><button class="category" data-category="PAD">PADS <b>02</b></button><button class="category" data-category="TEXTURE">TEXTURES <b>04</b></button><div class="preset-actions"><button id="exportPreset">EXPORT JSON</button><label>IMPORT JSON<input type="file" id="importPreset" accept="application/json"></label></div></aside>
           <div class="preset-list" id="presetList"></div>
         </div>
       </section>
