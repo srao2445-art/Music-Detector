@@ -70,4 +70,6 @@ To create preset files without hand-writing JSON, customize a sound in Nebula St
 
 ## Preview sounds inside the loader
 
-Click **AUDITION** beside any preset to apply it without closing the loader, then use the compact preview keyboard at the bottom of the dialog. Click **LOAD** when you want to close the loader and keep working with that sound in the main synthesizer.
+Click **AUDITION** beside any preset to apply it without closing the loader, then use the labeled two-octave preview keyboard at the bottom of the dialog. Click **LOAD** when you want to close the loader and keep working with that sound in the main synthesizer.
+
+Both the main performance keyboard and the in-loader audition keyboard display note names on every key. Changing the global octave refreshes the displayed note labels on both keyboards.

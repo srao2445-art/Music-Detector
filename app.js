@@ -4,6 +4,7 @@ const value = (id) => Number($(`#${id}`).value);
 const waveformColors = ['#4de5ff', '#a779ff', '#ffc868'];
 const keyboardMap = { a: 0, w: 1, s: 2, e: 3, d: 4, f: 5, t: 6, g: 7, y: 8, h: 9, u: 10, j: 11, k: 12, o: 13, l: 14, p: 15, ';': 16, "'": 17 };
 const blackNotes = new Set([1, 3, 6, 8, 10]);
+const noteNames = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
 const instrumentTypes = ['Lead', 'Pad', 'Bass', 'Keys', 'Pluck', 'Arp', 'Chord', 'Texture', 'FX', 'Custom'];
 const presetFileFormat = 'nebula-studio-preset';
 const presetFileVersion = 1;
@@ -46,10 +47,21 @@ function createFactoryPresets() {
     patch.category = base[2];
     patch.cutoff = Math.min(15000, Math.max(120, base[5] * (0.62 + (variation % 9) * 0.11)));
     patch.resonance = Math.min(22, base[6] + (variation % 5) - 2);
+    patch.oscillators[0].wave = ['sawtooth', 'square', 'triangle', 'sine'][variation % 4];
     patch.oscillators[0].detune = (variation % 15) - 7;
+    patch.oscillators[1].wave = ['triangle', 'sawtooth', 'square', 'sine'][(variation + index) % 4];
     patch.oscillators[1].semi = [0, 3, 5, 7, 12][variation % 5];
+    patch.oscillators[1].octave = [-2, -1, 0][variation % 3];
+    patch.oscillators[2].level = 12 + (variation % 6) * 7;
+    patch.drive = 4 + (variation % 7) * 5;
+    patch.filterEnv = -24 + (variation % 9) * 14;
+    patch.attack = Math.max(0.005, base[7] * (0.45 + (variation % 5) * 0.34));
+    patch.decay = Math.max(0.02, base[8] * (0.52 + (variation % 6) * 0.22));
+    patch.lfoShape = ['sine', 'triangle', 'sawtooth', 'square'][variation % 4];
     patch.lfoRate = 0.25 + (variation % 12) * 0.3;
     patch.lfoDepth = 5 + (variation % 8) * 5;
+    patch.chorus = 6 + (variation % 6) * 8;
+    patch.delay = 4 + (variation % 5) * 7;
     patch.reverb = Math.min(68, base[11] + (variation % 5) * 7);
     presets.push(patch);
   }
@@ -258,10 +270,13 @@ function drawScope() {
   for (let x = 0; x < canvas.width; x += 1) { const y = state.audio ? data[Math.floor(x / canvas.width * data.length)] / 256 * canvas.height : canvas.height / 2 + Math.sin(x / 20) * 7; x ? c.lineTo(x, y) : c.moveTo(x, y); } c.stroke();
 }
 
+function noteLabel(note) { return `${noteNames[note % 12]}${state.octave + Math.floor(note / 12)}`; }
 function fillKeyboard(keyboard, count, preview = false) {
-  for (let note = 0; note < count; note += 1) { const key = document.createElement('div'); key.className = `key ${blackNotes.has(note % 12) ? 'black' : 'white'}`; key.dataset[preview ? 'previewNote' : 'note'] = note; key.onpointerdown = () => play(note); key.onpointerup = () => stop(note); key.onpointerleave = () => stop(note); keyboard.appendChild(key); }
+  keyboard.innerHTML = '';
+  for (let note = 0; note < count; note += 1) { const key = document.createElement('div'); key.className = `key ${blackNotes.has(note % 12) ? 'black' : 'white'}`; key.dataset[preview ? 'previewNote' : 'note'] = note; key.innerHTML = `<span>${noteLabel(note)}</span>`; key.title = noteLabel(note); key.onpointerdown = () => play(note); key.onpointerup = () => stop(note); key.onpointerleave = () => stop(note); keyboard.appendChild(key); }
 }
-function buildKeyboard() { fillKeyboard($('#keyboard'), 25); fillKeyboard($('#preview-keyboard'), 13, true); }
+function buildKeyboard() { fillKeyboard($('#keyboard'), 25); fillKeyboard($('#preview-keyboard'), 25, true); }
+function refreshKeyboardLabels() { $$('.key[data-note], .key[data-preview-note]').forEach(key => { const note = Number(key.dataset.note ?? key.dataset.previewNote); key.querySelector('span').textContent = noteLabel(note); key.title = noteLabel(note); }); }
 
 function updateOutputs() {
   const outputs = { cutoff: `${Math.round(value('cutoff'))} Hz`, resonance: value('resonance').toFixed(1), drive: `${value('drive')}%`, 'filter-env': `${value('filter-env')}%`, attack: `${value('attack').toFixed(2)} s`, decay: `${value('decay').toFixed(2)} s`, sustain: `${Math.round(value('sustain') * 100)}%`, release: `${value('release').toFixed(2)} s`, 'lfo-rate': `${value('lfo-rate').toFixed(2)} Hz`, 'lfo-depth': `${value('lfo-depth')}%`, master: `${value('master')}%` };
@@ -286,7 +301,8 @@ function populatePresets() {
   $('#preset-total').textContent = factoryPresets.length;
   const categories = ['All', ...instrumentTypes.filter(category => allNebulaPatches().some(item => item.patch.category === category))]; const currentCategory = $('#preset-category').value; $('#preset-category').innerHTML = categories.map(category => `<option value="${category}">${category === 'All' ? 'ALL CATEGORIES' : category.toUpperCase()}</option>`).join(''); $('#preset-category').value = categories.includes(currentCategory) ? currentCategory : 'All';
 }
-function selectedPatch() { const [type, index] = $('#preset').value.split('-'); return type === 'factory' ? factoryPresets[index] : getUserPatches()[index]; }
+function resolvePresetReference(reference) { const [type, rawIndex] = reference.split('-'); const index = Number(rawIndex); const patch = type === 'factory' ? factoryPresets[index] : type === 'user' ? getUserPatches()[index] : null; if (!patch) throw new Error('Preset reference could not be resolved'); return patch; }
+function selectedPatch() { return resolvePresetReference($('#preset').value); }
 
 const userPatchKey = 'nebula-studio-exclusive-patches';
 function getUserPatches() { return JSON.parse(localStorage.getItem(userPatchKey) || '[]').map(patch => ({ ...patch, category: instrumentTypes.includes(patch.category) ? patch.category : 'Custom' })); }
@@ -314,7 +330,7 @@ function renderPresetLoader() {
   renderPresetFolders();
   $('#loader-count').textContent = `${matches.length} NEBULA PATCHES`;
   $('#preset-list').innerHTML = matches.length ? matches.map(item => `<article class="preset-row"><small>${item.type === 'factory' ? String(item.index + 1).padStart(3, '0') : 'USER'}</small><b>${item.patch.name}</b><em>${item.patch.category}</em><button class="audition-patch" data-audition="${item.type}-${item.index}">AUDITION</button><button data-load="${item.type}-${item.index}">LOAD</button>${item.type === 'user' ? `<button class="delete-patch" data-delete="${item.index}">DELETE</button>` : '<span></span>'}</article>`).join('') : '<p>No Nebula presets match this search.</p>';
-  $$('[data-audition]').forEach(button => button.onclick = () => { $('#preset').value = button.dataset.audition; const patch = selectedPatch(); loadPatch(patch); $('#preview-name').textContent = patch.name; showToast('Patch ready on preview keyboard'); });
+  $$('[data-audition]').forEach(button => button.onclick = () => { const reference = button.dataset.audition; const patch = resolvePresetReference(reference); $('#preset').value = reference; loadPatch(patch); $('#preview-name').textContent = patch.name; $$('.preset-row').forEach(row => row.classList.toggle('auditioning', row.contains(button))); showToast(`${patch.name} ready on preview keyboard`); });
   $$('[data-load]').forEach(button => button.onclick = () => { $('#preset').value = button.dataset.load; loadPatch(selectedPatch()); $('#preset-loader').close(); showToast('Nebula preset loaded'); });
   $$('[data-delete]').forEach(button => button.onclick = () => { const saved = getUserPatches(); saved.splice(Number(button.dataset.delete), 1); setUserPatches(saved); populatePresets(); renderPresetLoader(); showToast('Custom preset deleted'); });
 }
@@ -348,8 +364,8 @@ $('#next-preset').onclick = () => { $('#preset').selectedIndex = Math.min($('#pr
 $('#randomize').onclick = () => { const patch = factoryPresets[Math.floor(Math.random() * factoryPresets.length)]; loadPatch(patch); };
 $('#save-patch').onclick = () => { const name = prompt('Name this patch:', 'My Nebula Patch'); if (!name) return; const requestedFolder = prompt(`Instrument folder (${instrumentTypes.join(', ')}):`, 'Lead'); if (!requestedFolder) return; const patch = currentPatch(name); patch.category = instrumentTypes.find(folder => folder.toLowerCase() === requestedFolder.trim().toLowerCase()) || 'Custom'; const saved = getUserPatches(); saved.push(patch); setUserPatches(saved); populatePresets(); $('#preset').value = `user-${saved.length - 1}`; showToast(`Saved in ${patch.category} folder`); };
 $('#panic').onclick = panic;
-$('#oct-down').onclick = () => { state.octave = Math.max(0, state.octave - 1); $('#octave').textContent = `C${state.octave} — C${state.octave + 2}`; };
-$('#oct-up').onclick = () => { state.octave = Math.min(7, state.octave + 1); $('#octave').textContent = `C${state.octave} — C${state.octave + 2}`; };
+$('#oct-down').onclick = () => { state.octave = Math.max(0, state.octave - 1); $('#octave').textContent = `C${state.octave} — C${state.octave + 2}`; refreshKeyboardLabels(); };
+$('#oct-up').onclick = () => { state.octave = Math.min(7, state.octave + 1); $('#octave').textContent = `C${state.octave} — C${state.octave + 2}`; refreshKeyboardLabels(); };
 $('#macro-bright').oninput = event => { $('#cutoff').value = 180 + Math.pow(event.target.value / 100, 2) * 15000; updateOutputs(); };
 $('#macro-space').oninput = event => { $('#reverb').value = event.target.value * 0.72; $('#delay').value = event.target.value * 0.44; updateOutputs(); };
 $('#macro-motion').oninput = event => { $('#lfo-depth').value = event.target.value; updateOutputs(); };
