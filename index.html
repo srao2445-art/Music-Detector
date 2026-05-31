@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080b10">
+  <title>Nebula Studio — Browser Wavetable Synth</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand"><span class="logo">N</span><div><strong>NEBULA <em>STUDIO</em></strong><small>ADVANCED BROWSER WAVETABLE SYNTH</small></div></div>
+      <div class="preset-tools">
+        <button id="prev-preset" title="Previous preset">‹</button>
+        <label class="preset-select"><small>FACTORY PATCH</small><select id="preset"></select></label>
+        <button id="next-preset" title="Next preset">›</button>
+        <button id="open-loader" class="action">PRESET LOADER</button>
+        <button id="randomize" class="action">RANDOMIZE</button>
+        <button id="save-patch" class="action primary">SAVE PATCH</button>
+      </div>
+      <div class="status"><span class="status-dot"></span><b id="voice-count">0</b> VOICES <span>•</span> WEB AUDIO</div>
+    </header>
+
+    <main>
+      <section class="hero-row">
+        <div><h1>WAVETABLE ENGINE</h1><p>Edit every layer. Shape every movement. Play it live.</p></div>
+        <div class="record-tools">
+          <span class="record-status"><i id="record-dot"></i><b id="record-status">READY TO RECORD</b><time id="record-time">00:00</time></span>
+          <button id="record" class="record-button">● RECORD</button>
+          <button id="stop-record" disabled>■ STOP</button>
+          <button id="export-recording" disabled>⇩ EXPORT AUDIO</button>
+        </div>
+        <canvas id="scope" width="460" height="74"></canvas>
+      </section>
+
+      <section class="osc-grid" id="osc-grid"></section>
+
+      <section class="engine-grid">
+        <section class="panel filter-panel">
+          <header><span class="led on"></span><h2>FILTER</h2><select id="filter-type"><option value="lowpass">LOW PASS 24</option><option value="highpass">HIGH PASS</option><option value="bandpass">BAND PASS</option><option value="notch">NOTCH</option></select></header>
+          <div class="filter-body">
+            <canvas id="filter-graph" width="460" height="120"></canvas>
+            <div class="control-grid four">
+              <label>CUTOFF <output id="cutoff-out"></output><input id="cutoff" type="range" min="80" max="18000" value="2600"></label>
+              <label>RESONANCE <output id="resonance-out"></output><input id="resonance" type="range" min="0" max="24" step="0.1" value="5"></label>
+              <label>DRIVE <output id="drive-out"></output><input id="drive" type="range" min="0" max="100" value="8"></label>
+              <label>ENV AMOUNT <output id="filter-env-out"></output><input id="filter-env" type="range" min="-100" max="100" value="28"></label>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel envelope-panel">
+          <header><span class="led on"></span><h2>AMP ENVELOPE</h2><span class="tag">ENV 1</span></header>
+          <canvas id="env-graph" width="450" height="120"></canvas>
+          <div class="control-grid four">
+            <label>ATTACK <output id="attack-out"></output><input id="attack" type="range" min="0.005" max="2" step="0.005" value="0.04"></label>
+            <label>DECAY <output id="decay-out"></output><input id="decay" type="range" min="0.01" max="3" step="0.01" value="0.48"></label>
+            <label>SUSTAIN <output id="sustain-out"></output><input id="sustain" type="range" min="0" max="1" step="0.01" value="0.68"></label>
+            <label>RELEASE <output id="release-out"></output><input id="release" type="range" min="0.02" max="5" step="0.01" value="1.2"></label>
+          </div>
+        </section>
+      </section>
+
+      <section class="engine-grid lower">
+        <section class="panel">
+          <header><span class="led purple"></span><h2>MODULATION</h2><span class="tag">LFO 1 + MATRIX</span></header>
+          <div class="lfo-layout">
+            <canvas id="lfo-graph" width="280" height="112"></canvas>
+            <div class="control-grid two">
+              <label>SHAPE <select id="lfo-shape"><option>sine</option><option>triangle</option><option>sawtooth</option><option>square</option></select></label>
+              <label>TARGET <select id="lfo-target"><option value="cutoff">FILTER CUTOFF</option><option value="pitch">OSC PITCH</option><option value="level">MASTER LEVEL</option></select></label>
+              <label>RATE <output id="lfo-rate-out"></output><input id="lfo-rate" type="range" min="0.05" max="16" step="0.05" value="1.2"></label>
+              <label>DEPTH <output id="lfo-depth-out"></output><input id="lfo-depth" type="range" min="0" max="100" value="18"></label>
+            </div>
+          </div>
+          <div class="matrix" id="matrix"></div>
+        </section>
+
+        <section class="panel fx-panel">
+          <header><span class="led amber"></span><h2>FX RACK</h2><span class="tag">POST FILTER</span></header>
+          <div class="fx-grid">
+            <label class="switch-card"><input id="chorus-on" type="checkbox" checked><span>CHORUS</span><small>WIDE DIMENSION</small><input id="chorus" type="range" min="0" max="100" value="20"></label>
+            <label class="switch-card"><input id="delay-on" type="checkbox" checked><span>DELAY</span><small>STEREO ECHO</small><input id="delay" type="range" min="0" max="70" value="16"></label>
+            <label class="switch-card"><input id="reverb-on" type="checkbox" checked><span>REVERB</span><small>SPACE TAIL</small><input id="reverb" type="range" min="0" max="80" value="20"></label>
+            <label class="switch-card"><input id="distortion-on" type="checkbox"><span>DRIVE</span><small>SATURATION</small><input id="distortion" type="range" min="0" max="100" value="8"></label>
+          </div>
+        </section>
+      </section>
+
+      <section class="performance-grid">
+        <section class="panel macros-panel">
+          <header><h2>PERFORMANCE MACROS</h2><span class="tag">LIVE CONTROLS</span></header>
+          <div class="macro-grid">
+            <label><span>1</span><b>BRIGHT</b><input id="macro-bright" type="range" min="0" max="100" value="45"></label>
+            <label><span>2</span><b>SPACE</b><input id="macro-space" type="range" min="0" max="100" value="20"></label>
+            <label><span>3</span><b>MOTION</b><input id="macro-motion" type="range" min="0" max="100" value="18"></label>
+            <label><span>4</span><b>GRIT</b><input id="macro-grit" type="range" min="0" max="100" value="8"></label>
+          </div>
+        </section>
+        <section class="panel master-panel">
+          <header><h2>MASTER</h2><span class="tag">OUTPUT</span></header>
+          <label>VOLUME <output id="master-out"></output><input id="master" type="range" min="0" max="100" value="62"></label>
+        </section>
+      </section>
+
+      <section class="keyboard-panel panel">
+        <header>
+          <h2>PERFORMANCE KEYBOARD</h2>
+          <button id="oct-down">OCT −</button><strong id="octave">C3 — C5</strong><button id="oct-up">OCT +</button>
+          <span class="key-hint">PLAY: A W S E D F T G Y H U J K</span>
+          <button id="panic">PANIC</button>
+        </header>
+        <div class="keyboard" id="keyboard"></div>
+      </section>
+    </main>
+    <footer>NEBULA STUDIO <span>•</span> <span id="preset-total"></span> FACTORY PATCHES <span>•</span> LOCAL PATCH STORAGE <span>•</span> SYNTH-ONLY AUDIO RECORDER</footer>
+  </div>
+
+  <dialog id="preset-loader" class="preset-loader">
+    <header><div><small>NEBULA STUDIO EXCLUSIVE</small><h2>DEDICATED PRESET LOADER</h2></div><button id="close-loader" aria-label="Close preset loader">×</button></header>
+    <div class="loader-toolbar">
+      <input id="preset-search" type="search" placeholder="Search Nebula presets…">
+      <select id="preset-category"><option value="All">ALL CATEGORIES</option></select>
+      <span id="loader-count"></span>
+    </div>
+    <div class="loader-layout">
+      <aside><button class="library-tab active" data-library="all">ALL NEBULA PATCHES</button><button class="library-tab" data-library="factory">FACTORY BANK</button><button class="library-tab" data-library="user">MY SAVED PATCHES</button><p>Only patches created for Nebula Studio are listed here.</p></aside>
+      <div class="preset-list" id="preset-list"></div>
+    </div>
+  </dialog>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
