@@ -19,7 +19,7 @@ Open [http://localhost:4173](http://localhost:4173) in a modern browser. Click a
 
 ## Dedicated preset loader
 
-Click **PRESET LOADER** to open Nebula Studio's in-app sound library. Search by name, browse instrument folders such as **Lead**, **Pad**, **Bass**, **Keys**, **Pluck**, **Arp**, **Chord**, and **Texture**, switch between the factory bank and your saved presets, load a patch, or delete one of your own patches. The loader only lists patches bundled with or saved by Nebula Studio; it does not scan unrelated browser files or external preset folders.
+Click **PRESET LOADER** to open Nebula Studio's in-app sound library. Search by name, browse instrument folders such as **Lead**, **Pad**, **Bass**, **Keys**, **Pluck**, **Arp**, **Chord**, and **Texture**, switch between the factory bank and your saved presets, load a patch, or click **DELETE** beside one of your saved patches. Factory presets are protected and marked **LOCKED** so the built-in bank cannot be removed accidentally. The loader only lists patches bundled with or saved by Nebula Studio; it does not scan unrelated browser files or external preset folders.
 
 ## Record and export audio
 
@@ -73,3 +73,7 @@ To create preset files without hand-writing JSON, customize a sound in Nebula St
 Click **AUDITION** beside any preset to apply it without closing the loader, then use the labeled two-octave preview keyboard at the bottom of the dialog. Click **LOAD** when you want to close the loader and keep working with that sound in the main synthesizer.
 
 Both the main performance keyboard and the in-loader audition keyboard display note names on every key. Changing the global octave refreshes the displayed note labels on both keyboards.
+
+## Delete saved presets
+
+Open **LOAD PRESET**, switch to **MY SAVED PATCHES**, and click **DELETE** beside the custom sound you want to remove. Factory-bank rows are marked **LOCKED** because built-in sounds are read-only.
