@@ -15,11 +15,11 @@ Open [http://localhost:4173](http://localhost:4173) in a modern browser. Click a
 - Play notes with the on-screen keyboard or `A W S E D F T G Y H U J K`.
 - Change oscillator waveform, octave, semitone, detune, and level in each oscillator panel.
 - Shape the multimode filter, amp envelope, LFO target/rate/depth, effects, macros, and master volume.
-- Browse 256 included original factory patches, click **RANDOMIZE** for inspiration, and click **SAVE PATCH** to store custom sounds in Nebula Studio's dedicated browser-local patch storage.
+- Browse 256 included original factory patches, click **RANDOMIZE** for inspiration, and click **SAVE PATCH** to store custom sounds in Nebula Studio's dedicated browser-local patch storage. When saving, assign the sound to an instrument folder so your own patches remain organized.
 
 ## Dedicated preset loader
 
-Click **PRESET LOADER** to open Nebula Studio's in-app sound library. Search by name, filter by sound category, switch between the factory bank and your saved presets, load a patch, or delete one of your own patches. The loader only lists patches bundled with or saved by Nebula Studio; it does not scan unrelated browser files or external preset folders.
+Click **PRESET LOADER** to open Nebula Studio's in-app sound library. Search by name, browse instrument folders such as **Lead**, **Pad**, **Bass**, **Keys**, **Pluck**, **Arp**, **Chord**, and **Texture**, switch between the factory bank and your saved presets, load a patch, or delete one of your own patches. The loader only lists patches bundled with or saved by Nebula Studio; it does not scan unrelated browser files or external preset folders.
 
 ## Record and export audio
 

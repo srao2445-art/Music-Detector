@@ -4,6 +4,7 @@ const value = (id) => Number($(`#${id}`).value);
 const waveformColors = ['#4de5ff', '#a779ff', '#ffc868'];
 const keyboardMap = { a: 0, w: 1, s: 2, e: 3, d: 4, f: 5, t: 6, g: 7, y: 8, h: 9, u: 10, j: 11, k: 12, o: 13, l: 14, p: 15, ';': 16, "'": 17 };
 const blackNotes = new Set([1, 3, 6, 8, 10]);
+const instrumentTypes = ['Lead', 'Pad', 'Bass', 'Keys', 'Pluck', 'Arp', 'Chord', 'Texture', 'FX', 'Custom'];
 
 const state = {
   audio: null,
@@ -11,6 +12,7 @@ const state = {
   octave: 3,
   recording: { recorder: null, chunks: [], blob: null, startedAt: 0, timer: null },
   loaderLibrary: 'all',
+  loaderCategory: 'All',
   oscillators: [
     { enabled: true, wave: 'sawtooth', octave: 0, semi: 0, detune: -6, level: 72, pan: -12 },
     { enabled: true, wave: 'triangle', octave: -1, semi: 7, detune: 5, level: 42, pan: 14 },
@@ -278,18 +280,24 @@ function populatePresets() {
   const saved = getUserPatches();
   saved.forEach((patch, index) => select.add(new Option(`USER  ${patch.name}`, `user-${index}`)));
   $('#preset-total').textContent = factoryPresets.length;
-  const categories = ['All', ...new Set(allNebulaPatches().map(item => item.patch.category))]; const currentCategory = $('#preset-category').value; $('#preset-category').innerHTML = categories.map(category => `<option value="${category}">${category === 'All' ? 'ALL CATEGORIES' : category.toUpperCase()}</option>`).join(''); $('#preset-category').value = categories.includes(currentCategory) ? currentCategory : 'All';
+  const categories = ['All', ...instrumentTypes.filter(category => allNebulaPatches().some(item => item.patch.category === category))]; const currentCategory = $('#preset-category').value; $('#preset-category').innerHTML = categories.map(category => `<option value="${category}">${category === 'All' ? 'ALL CATEGORIES' : category.toUpperCase()}</option>`).join(''); $('#preset-category').value = categories.includes(currentCategory) ? currentCategory : 'All';
 }
 function selectedPatch() { const [type, index] = $('#preset').value.split('-'); return type === 'factory' ? factoryPresets[index] : getUserPatches()[index]; }
 
 const userPatchKey = 'nebula-studio-exclusive-patches';
-function getUserPatches() { return JSON.parse(localStorage.getItem(userPatchKey) || '[]'); }
+function getUserPatches() { return JSON.parse(localStorage.getItem(userPatchKey) || '[]').map(patch => ({ ...patch, category: instrumentTypes.includes(patch.category) ? patch.category : 'Custom' })); }
 function setUserPatches(patches) { localStorage.setItem(userPatchKey, JSON.stringify(patches)); }
 function showToast(message) { const toast = $('#toast'); toast.textContent = message; toast.classList.add('show'); clearTimeout(showToast.timer); showToast.timer = setTimeout(() => toast.classList.remove('show'), 2600); }
 function allNebulaPatches() { return [...factoryPresets.map((patch, index) => ({ patch, type: 'factory', index })), ...getUserPatches().map((patch, index) => ({ patch, type: 'user', index }))]; }
+function renderPresetFolders() {
+  const folders = ['All', ...instrumentTypes.filter(folder => allNebulaPatches().some(item => item.patch.category === folder))];
+  $('#instrument-folders').innerHTML = folders.map(folder => { const count = allNebulaPatches().filter(item => folder === 'All' || item.patch.category === folder).length; return `<button class="folder-button ${folder === state.loaderCategory ? 'active' : ''}" data-folder="${folder}">▸ ${folder.toUpperCase()} <span>${count}</span></button>`; }).join('');
+  $$('[data-folder]').forEach(button => button.onclick = () => { state.loaderCategory = button.dataset.folder; $('#preset-category').value = state.loaderCategory; renderPresetLoader(); });
+}
 function renderPresetLoader() {
-  const search = $('#preset-search').value.trim().toLowerCase(); const category = $('#preset-category').value;
+  const search = $('#preset-search').value.trim().toLowerCase(); const category = state.loaderCategory;
   const matches = allNebulaPatches().filter(item => (state.loaderLibrary === 'all' || state.loaderLibrary === item.type) && (category === 'All' || item.patch.category === category) && `${item.patch.name} ${item.patch.category}`.toLowerCase().includes(search));
+  renderPresetFolders();
   $('#loader-count').textContent = `${matches.length} NEBULA PATCHES`;
   $('#preset-list').innerHTML = matches.length ? matches.map(item => `<article class="preset-row"><small>${item.type === 'factory' ? String(item.index + 1).padStart(3, '0') : 'USER'}</small><b>${item.patch.name}</b><em>${item.patch.category}</em><button data-load="${item.type}-${item.index}">LOAD</button>${item.type === 'user' ? `<button class="delete-patch" data-delete="${item.index}">DELETE</button>` : '<span></span>'}</article>`).join('') : '<p>No Nebula presets match this search.</p>';
   $$('[data-load]').forEach(button => button.onclick = () => { $('#preset').value = button.dataset.load; loadPatch(selectedPatch()); $('#preset-loader').close(); showToast('Nebula preset loaded'); });
@@ -323,7 +331,7 @@ $('#preset').addEventListener('change', () => loadPatch(selectedPatch()));
 $('#prev-preset').onclick = () => { $('#preset').selectedIndex = Math.max(0, $('#preset').selectedIndex - 1); loadPatch(selectedPatch()); };
 $('#next-preset').onclick = () => { $('#preset').selectedIndex = Math.min($('#preset').options.length - 1, $('#preset').selectedIndex + 1); loadPatch(selectedPatch()); };
 $('#randomize').onclick = () => { const patch = factoryPresets[Math.floor(Math.random() * factoryPresets.length)]; loadPatch(patch); };
-$('#save-patch').onclick = () => { const name = prompt('Name this patch:', 'My Nebula Patch'); if (!name) return; const saved = getUserPatches(); saved.push(currentPatch(name)); setUserPatches(saved); populatePresets(); $('#preset').value = `user-${saved.length - 1}`; showToast('Custom Nebula preset saved'); };
+$('#save-patch').onclick = () => { const name = prompt('Name this patch:', 'My Nebula Patch'); if (!name) return; const requestedFolder = prompt(`Instrument folder (${instrumentTypes.join(', ')}):`, 'Lead'); if (!requestedFolder) return; const patch = currentPatch(name); patch.category = instrumentTypes.find(folder => folder.toLowerCase() === requestedFolder.trim().toLowerCase()) || 'Custom'; const saved = getUserPatches(); saved.push(patch); setUserPatches(saved); populatePresets(); $('#preset').value = `user-${saved.length - 1}`; showToast(`Saved in ${patch.category} folder`); };
 $('#panic').onclick = panic;
 $('#oct-down').onclick = () => { state.octave = Math.max(0, state.octave - 1); $('#octave').textContent = `C${state.octave} — C${state.octave + 2}`; };
 $('#oct-up').onclick = () => { state.octave = Math.min(7, state.octave + 1); $('#octave').textContent = `C${state.octave} — C${state.octave + 2}`; };
@@ -334,7 +342,7 @@ $('#macro-grit').oninput = event => { $('#distortion-on').checked = true; $('#di
 $('#open-loader').onclick = openPresetLoader;
 $('#close-loader').onclick = () => $('#preset-loader').close();
 $('#preset-search').oninput = renderPresetLoader;
-$('#preset-category').onchange = renderPresetLoader;
+$('#preset-category').onchange = event => { state.loaderCategory = event.target.value; renderPresetLoader(); };
 $$('.library-tab').forEach(button => button.onclick = () => { $$('.library-tab').forEach(tab => tab.classList.toggle('active', tab === button)); state.loaderLibrary = button.dataset.library; renderPresetLoader(); });
 $('#record').onclick = startRecording;
 $('#stop-record').onclick = stopRecording;

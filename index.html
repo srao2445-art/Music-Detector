@@ -15,7 +15,7 @@
         <button id="prev-preset" title="Previous preset">‹</button>
         <label class="preset-select"><small>FACTORY PATCH</small><select id="preset"></select></label>
         <button id="next-preset" title="Next preset">›</button>
-        <button id="open-loader" class="action">PRESET LOADER</button>
+        <button id="open-loader" class="action loader-action">⌕ LOAD PRESET</button>
         <button id="randomize" class="action">RANDOMIZE</button>
         <button id="save-patch" class="action primary">SAVE PATCH</button>
       </div>
@@ -125,7 +125,11 @@
       <span id="loader-count"></span>
     </div>
     <div class="loader-layout">
-      <aside><button class="library-tab active" data-library="all">ALL NEBULA PATCHES</button><button class="library-tab" data-library="factory">FACTORY BANK</button><button class="library-tab" data-library="user">MY SAVED PATCHES</button><p>Only patches created for Nebula Studio are listed here.</p></aside>
+      <aside>
+        <h3>LIBRARIES</h3><button class="library-tab active" data-library="all">ALL NEBULA PATCHES</button><button class="library-tab" data-library="factory">FACTORY BANK</button><button class="library-tab" data-library="user">MY SAVED PATCHES</button>
+        <h3>INSTRUMENT FOLDERS</h3><nav id="instrument-folders" class="instrument-folders"></nav>
+        <p>Every patch is filed by instrument type. Only sounds created for Nebula Studio appear here.</p>
+      </aside>
       <div class="preset-list" id="preset-list"></div>
     </div>
   </dialog>
