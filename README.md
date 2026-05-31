@@ -15,3 +15,4 @@ Open `http://localhost:4173`, click a piano key to initialize audio, and play us
 - Three playable wavetable oscillators with table-position morphing in the worklet.
 - Sub/noise panels, dual-filter workspace, modulation matrix, envelopes, LFOs, macros, routing, FX rack, step sequencer, piano roll, preset browser, JSON import/export, and responsive layout.
 - Web Audio distortion, delay, convolution reverb, master gain, and synthesized voices rendered in an `AudioWorklet`.
+- Automatic native Web Audio compatibility mode when `AudioWorklet` is unavailable or blocked by the browser context.
