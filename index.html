@@ -64,7 +64,7 @@
       <section class="page" id="filter-page">
         <div class="section-heading"><div><small>SIGNAL PATH</small><h1>DUAL FILTERS</h1></div><p>Independent character filters with serial and parallel routing</p></div>
         <div class="filter-grid" id="filterGrid"></div>
-        <article class="module route-panel"><div class="module-title"><div><small>FLOW CONTROL</small><h3>FILTER ROUTING</h3></div><div class="segmented"><button class="active">PARALLEL</button><button>SERIES A › B</button><button>SERIES B › A</button></div></div><div class="routing-wide"><span>OSCILLATORS</span><i></i><strong>FILTER A</strong><i></i><strong>FILTER B</strong><i></i><em>FX BUSES</em><i></i><b>MASTER</b></div></article>
+        <article class="module route-panel"><div class="module-title"><div><small>FLOW CONTROL</small><h3>FILTER ROUTING</h3></div><div class="segmented" id="filterRouting"><button class="active">PARALLEL</button><button>SERIES A › B</button><button>SERIES B › A</button></div></div><div class="routing-wide"><span>OSCILLATORS</span><i></i><strong>FILTER A</strong><i></i><strong>FILTER B</strong><i></i><em>FX BUSES</em><i></i><b>MASTER</b></div></article>
       </section>
 
       <section class="page" id="matrix-page">
@@ -83,7 +83,7 @@
         <div class="section-heading"><div><small>POST PROCESSING</small><h1>EFFECTS RACK</h1></div><p>Two insert busses and a master finishing chain</p></div>
         <div class="fx-toolbar"><div class="segmented"><button class="active">BUS A</button><button>BUS B</button><button>MASTER</button></div><button class="add-btn">+ ADD MODULE</button></div>
         <div class="fx-rack" id="fxRack"></div>
-        <article class="module fx-library"><div class="module-title"><div><small>AVAILABLE MODULES</small><h3>FX LIBRARY</h3></div><b>DRAG TO INSERT</b></div><div class="fx-chips"><span>FLANGER</span><span>PHASER</span><span>CONVOLUTION</span><span>FILTER FX</span><span>STEREO WIDTH</span><span>MID / SIDE</span><span>MULTIBAND SPLIT</span><span>MONO BASS</span></div></article>
+        <article class="module fx-library"><div class="module-title"><div><small>AVAILABLE MODULES</small><h3>FX LIBRARY</h3></div><b>DRAG TO INSERT</b></div><div class="fx-chips" id="fxLibrary"><span>FLANGER</span><span>PHASER</span><span>CONVOLUTION</span><span>FILTER FX</span><span>STEREO WIDTH</span><span>MID / SIDE</span><span>MULTIBAND SPLIT</span><span>MONO BASS</span></div></article>
       </section>
 
       <section class="page" id="sequencer-page">
@@ -109,5 +109,6 @@
   </div>
   <div class="toast" id="toast"></div>
   <script src="app.js"></script>
+  <script src="advanced.js"></script>
 </body>
 </html>
