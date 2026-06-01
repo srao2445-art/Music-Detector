@@ -1,6 +1,6 @@
-# Nocturne Hybrid Wavetable Synth
+# Nocturne Hybrid Synth
 
-An original, responsive browser-based hybrid synthesizer. Nocturne uses the Web Audio API and prefers an `AudioWorklet` for low-latency polyphonic synthesis, while preserving a native Web Audio compatibility mode when a browser blocks worklets.
+An original, responsive browser-based hybrid synthesizer. Nocturne uses the Web Audio API and an `AudioWorklet` for its primary polyphonic synthesis path, while preserving a reduced native Web Audio compatibility mode when a browser blocks worklets.
 
 ## Run locally
 
@@ -8,21 +8,25 @@ An original, responsive browser-based hybrid synthesizer. Nocturne uses the Web 
 python3 -m http.server 4173
 ```
 
-Open `http://localhost:4173`, click a piano key to initialize audio, and play using the on-screen keyboard or the computer keyboard (`A` through `K`, with black keys on `W`, `E`, `T`, `Y`, and `U`). Serving the files over HTTP is recommended because some browsers block worklet modules from `file://` pages.
+Open `http://localhost:4173`, click a piano key to initialize audio, and play using the on-screen keyboard or the computer keyboard (`A` through `K`, with black keys on `W`, `E`, `T`, `Y`, and `U`). Serving the files over HTTP is recommended because browsers commonly block worklet modules from `file://` pages.
 
 ## Playable features
 
 - Three playable oscillators with selectable wavetable, sampler, multisample, granular, and additive spectral modes.
+- A drawable 256-frame wavetable editor. The worklet interpolates smoothly between adjacent frames and supports bend, sync, mirror, remap, FM, AM, fold, and PWM-style warp selections.
 - Connected oscillator unison, detune, stereo width, pan, phase, random-phase, level, warp, and wavetable-position controls.
-- Sample playback uses decoded audio buffers with MIDI pitch tracking. Multisample playback maps selected files across root notes and selects the nearest zone for the played note.
-- Granular mode schedules windowed grains from the decoded sample buffer. Spectral mode uses a lightweight harmonic-resynthesis bank with blur, shift, formant, and stretch shaping.
-- Drag an LFO source chip onto a knob to add a modulation route, or adjust and remove routes in the modulation matrix.
+- Sample playback with decoded buffers, MIDI pitch tracking, start/end selection, forward and ping-pong looping, reverse playback, slicing, and pitch/stretch-rate control.
+- Multisample playback that maps selected files across root notes and selects the nearest zone for the played note.
+- A stereo grain-cloud engine with size, density, position, random position, pitch, spread, and freeze controls.
+- A lightweight additive spectral-resynthesis bank with blur, shift, formant, and stretch shaping.
+- Drag modulation sources onto assignable knobs, then edit bipolar depth or remove assignments in the matrix. Sources include LFOs, envelopes, velocity, key tracking, random, note, and macros.
 - Route each oscillator to Filter A, Filter B, or the direct master path. The two audible filters support parallel, series A → B, and series B → A modes.
-- A 16-step sequencer that triggers notes with per-step velocity while its transport is running.
-- Click or drag modules from the FX library into the rack to insert removable DSP modules. The browser implementation provides lightweight flanger, phaser, convolution-style echo, filter, stereo, mid/side, multiband saturation, and mono-bass processors rather than studio plug-in replacements.
-- A live activity-based CPU meter, animated oscilloscopes, preset browser, patch JSON import/export, distortion, delay, convolution reverb, and responsive layout.
-- Automatic native Web Audio compatibility mode when `AudioWorklet` is unavailable or blocked by the browser context.
+- A 16-step sequencer with per-step velocity, probability, gate, and ratchet controls.
+- Click or drag modules from the FX library into the rack to insert removable DSP modules, including lightweight flanger, phaser, convolution-style echo, filter, stereo, mid/side, multiband saturation, and mono-bass processors.
+- Selectable 1×, 2×, or 4× worklet oversampling, a configurable polyphony limit, oldest-voice stealing, live CPU activity feedback, preset JSON import/export, animated scopes, and a responsive layout.
 
-## Scope
+## Scope and next architecture steps
 
-Nocturne is a browser synth implementation, not a clone of a commercial synthesizer. Its granular, spectral, and FX modules are intentionally compact Web Audio DSP engines designed for interactive sound design; they are not marketed as feature-equivalent replacements for desktop production plug-ins.
+Nocturne is a browser synth implementation, not a clone of a commercial synthesizer. Its granular, spectral, warp, sampler, and FX modules are compact Web Audio DSP engines designed for interactive sound design; they are not marketed as feature-equivalent replacements for desktop production plug-ins.
+
+The next production-oriented milestones would be a WASM DSP core, band-limited wavetable generation, FFT-based spectral editing and freeze, SFZ parsing with key/velocity zones, dedicated FX-bus routing, a full piano-roll data model, preset packs with metadata and favorites, and profiling-driven mobile optimization.
