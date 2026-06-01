@@ -28,6 +28,7 @@ Open `http://localhost:4173`, click a piano key to initialize audio, and play us
 - A removable FX rack with lightweight hyper/dimension, chorus, OTT-style compression, distortion, EQ, reverb, flanger, phaser, convolution-style echo, filter, stereo, mid/side, multiband saturation, and mono-bass branches.
 - A 16-step clip and arpeggiator editor with audible editable notes, velocity, probability, gate, and ratchet controls.
 - Web MIDI keyboard input, MIDI CC learn from knob context menus, undo/redo history, and A/B patch comparison.
+- Full version-3 preset snapshots save and restore oscillator modes and controls, dual filters, modulation routes, macros, utility engines, FX parameters and inserts, sampler values, quality settings, spectral partials, sequencer steps, and master volume.
 - Master-output WAV recording with record/stop status and one-click export of the latest stereo take.
 - Selectable high, balanced, and eco quality modes; 1×, 2×, and 4× oversampling; configurable polyphony; released-voice-first stealing; and measured AudioWorklet CPU telemetry.
 - Optional local WASM clipping: place your untracked `dsp-core.wasm.base64.txt` beside `index.html` to enable the WASM `soft_clip` kernel. The browser decodes and transfers it to the worklet at runtime. If the local file is absent, the synth automatically keeps using its JavaScript soft-clipping fallback. You may also keep an untracked local `dsp-core.c` beside `index.html` when you want to rebuild the Base64 module. No C source, compiled WASM binary, or encoded WASM artifact is committed.
