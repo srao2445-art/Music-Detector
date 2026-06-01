@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#070a0f">
+  <title>NOCTURNE · Hybrid Wavetable Synth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">N</span><div><b>NOCTURNE</b><small>HYBRID WAVETABLE INSTRUMENT</small></div></div>
+      <div class="preset-strip">
+        <button class="icon-btn" id="prevPreset" aria-label="Previous preset">‹</button><button class="icon-btn" id="nextPreset" aria-label="Next preset">›</button>
+        <button class="preset-name" id="presetToggle" aria-expanded="false" aria-controls="quickPresetMenu"><small>PRESET</small><b id="activePreset">SILVER HORIZON</b><span>⌄</span></button>
+        <div class="quick-preset-menu" id="quickPresetMenu" hidden></div>
+      </div>
+      <div class="master-strip">
+        <div><small>VOICES</small><b id="voiceCount">00</b></div>
+        <label class="mini-knob"><span>MASTER</span><input type="range" id="masterVolume" min="0" max="1" value="0.72" step="0.01"></label>
+        <button class="play-btn" id="panicBtn" title="Stop all notes">■</button>
+        <button class="save-btn" id="savePreset">SAVE</button>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="Synth sections">
+      <button class="tab active" data-tab="osc">OSC</button><button class="tab" data-tab="filter">FILTER</button>
+      <button class="tab" data-tab="matrix">MATRIX</button><button class="tab" data-tab="fx">FX</button>
+      <button class="tab" data-tab="sequencer">SEQUENCER</button><button class="tab" data-tab="presets">PRESETS</button>
+      <div class="tab-spacer"></div><button class="utility-btn" id="randomize">✦ RANDOMIZE</button>
+    </nav>
+
+    <main>
+      <section class="page active" id="osc-page">
+        <div class="section-heading"><div><small>SOUND DESIGN</small><h1>OSCILLATORS</h1></div><p>Three shapeable wavetable engines · drag modulation sources onto any control</p></div>
+        <div class="osc-grid" id="oscGrid"></div>
+        <div class="utility-row">
+          <article class="module sub-module">
+            <div class="module-title"><div><span class="power on"></span><small>SUB ENGINE</small><h3>SUB OSCILLATOR</h3></div><b>–1 OCT</b></div>
+            <canvas id="subWave" width="280" height="84"></canvas>
+            <div class="compact-controls"><label><span>LEVEL</span><input type="range" value="34"></label><label><span>SHAPE</span><select><option>SINE</option><option>TRIANGLE</option><option>SQUARE</option></select></label><label><span>DIRECT</span><input type="checkbox" checked></label></div>
+          </article>
+          <article class="module noise-module">
+            <div class="module-title"><div><span class="power on"></span><small>TEXTURE</small><h3>NOISE ENGINE</h3></div><b>ANALOG AIR</b></div>
+            <canvas id="noiseWave" width="280" height="84"></canvas>
+            <div class="compact-controls"><label><span>LEVEL</span><input type="range" value="20"></label><label><span>COLOR</span><input type="range" value="65"></label><label><span>KEY</span><input type="checkbox"></label></div>
+          </article>
+          <article class="module routing-module">
+            <div class="module-title"><div><small>SIGNAL PATH</small><h3>ROUTING</h3></div><b>DUAL BUS</b></div>
+            <div class="routing-map"><span>OSC A</span><i></i><strong>FILTER A</strong><i></i><em>FX A</em><span>OSC B</span><i></i><strong>FILTER B</strong><i></i><em>FX B</em><span>OSC C</span><i></i><strong>MASTER</strong><i></i><em>OUT</em></div>
+          </article>
+        </div>
+        <div class="advanced-grid">
+          <article class="module lab-module"><div class="module-title"><div><small>HYBRID ENGINE LAB</small><h3>GRANULAR SCULPT</h3></div><b>LIVE BUFFER</b></div><div class="lab-controls"><label>GRAIN SIZE<input type="range" value="42"></label><label>DENSITY<input type="range" value="66"></label><label>SPRAY<input type="range" value="28"></label><label>TEXTURE<input type="range" value="57"></label></div><div class="loop-region"><i></i><span>LOOP REGION · 02.18s</span></div></article>
+          <article class="module lab-module"><div class="module-title"><div><small>HYBRID ENGINE LAB</small><h3>SPECTRAL RESYNTHESIS</h3></div><b>128 BINS</b></div><div class="lab-controls"><label>BLUR<input type="range" value="36"></label><label>SHIFT<input type="range" value="51"></label><label>FORMANT<input type="range" value="63"></label><label>STRETCH<input type="range" value="21"></label></div><div class="spectrum-bars"></div></article>
+          <article class="module lab-module"><div class="module-title"><div><small>SOURCE MANAGER</small><h3>TABLES & SAMPLES</h3></div><b>USER LIBRARY</b></div><div class="source-actions"><label>LOAD WAVETABLE<input type="file" accept="audio/*"></label><label>LOAD SAMPLE<input type="file" accept="audio/*"></label><label>MAP MULTISAMPLE<input type="file" accept="audio/*" multiple></label></div><p>Frame interpolation enabled · drag files to any source slot</p></article>
+        </div>
+      </section>
+
+      <section class="page" id="filter-page">
+        <div class="section-heading"><div><small>SIGNAL PATH</small><h1>DUAL FILTERS</h1></div><p>Independent character filters with serial and parallel routing</p></div>
+        <div class="filter-grid" id="filterGrid"></div>
+        <article class="module route-panel"><div class="module-title"><div><small>FLOW CONTROL</small><h3>FILTER ROUTING</h3></div><div class="segmented" id="filterRouting"><button class="active">PARALLEL</button><button>SERIES A › B</button><button>SERIES B › A</button></div></div><div class="routing-wide"><span>OSCILLATORS</span><i></i><strong>FILTER A</strong><i></i><strong>FILTER B</strong><i></i><em>FX BUSES</em><i></i><b>MASTER</b></div></article>
+      </section>
+
+      <section class="page" id="matrix-page">
+        <div class="section-heading"><div><small>MOTION</small><h1>MODULATION</h1></div><p>Drag a source chip onto an assignable knob · double-click a target to clear</p></div>
+        <div class="mod-layout">
+          <div class="mod-sources">
+            <article class="module env-panel"><div class="module-title"><div><small>ENVELOPE 1</small><h3>AMPLITUDE</h3></div><b>AMP</b></div><canvas class="env-canvas" id="envCanvas" width="560" height="180"></canvas><div class="env-sliders" id="envSliders"></div></article>
+            <div class="lfo-grid" id="lfoGrid"></div>
+          </div>
+          <article class="module matrix-panel"><div class="module-title"><div><small>ASSIGNMENTS</small><h3>MOD MATRIX</h3></div><button class="add-btn" id="addRoute">+ ROUTE</button></div><div class="matrix-table" id="matrixTable"></div></article>
+        </div>
+        <article class="module macro-panel"><div class="module-title"><div><small>PERFORMANCE</small><h3>MACROS</h3></div><b>8 ASSIGNABLE CONTROLS</b></div><div class="macro-grid" id="macroGrid"></div></article>
+      </section>
+
+      <section class="page" id="fx-page">
+        <div class="section-heading"><div><small>POST PROCESSING</small><h1>EFFECTS RACK</h1></div><p>Two insert busses and a master finishing chain</p></div>
+        <div class="fx-toolbar"><div class="segmented"><button class="active">BUS A</button><button>BUS B</button><button>MASTER</button></div><button class="add-btn">+ ADD MODULE</button></div>
+        <div class="fx-rack" id="fxRack"></div>
+        <article class="module fx-library"><div class="module-title"><div><small>AVAILABLE MODULES</small><h3>FX LIBRARY</h3></div><b>DRAG TO INSERT</b></div><div class="fx-chips" id="fxLibrary"><span>FLANGER</span><span>PHASER</span><span>CONVOLUTION</span><span>FILTER FX</span><span>STEREO WIDTH</span><span>MID / SIDE</span><span>MULTIBAND SPLIT</span><span>MONO BASS</span></div></article>
+      </section>
+
+      <section class="page" id="sequencer-page">
+        <div class="section-heading"><div><small>COMPOSITION</small><h1>SEQUENCER</h1></div><p>Arpeggiator, velocity steps and a piano-roll sketchpad</p></div>
+        <div class="seq-toolbar"><button class="transport" id="seqPlay">▶</button><label><span>BPM</span><input id="tempo" type="number" value="124" min="40" max="240"></label><label><span>SWING</span><input type="range" value="18"></label><label><span>SCALE</span><select><option>D MINOR</option><option>C MAJOR</option><option>F DORIAN</option><option>CHROMATIC</option></select></label><div class="segmented"><button class="active">STEPS</button><button>PIANO ROLL</button><button>ARP</button></div></div>
+        <article class="module sequencer"><div class="piano-roll" id="pianoRoll"></div><div class="step-row" id="stepRow"></div></article>
+      </section>
+
+      <section class="page" id="presets-page">
+        <div class="section-heading"><div><small>LIBRARY</small><h1>PRESET BROWSER</h1></div><p>Save your patches locally or move them between devices as JSON files</p></div>
+        <div class="preset-browser">
+          <aside class="preset-sidebar"><label class="search"><span>⌕</span><input id="presetSearch" placeholder="Search presets"></label><h4>CATEGORIES</h4><button class="category active" data-category="ALL">ALL PATCHES <b>12</b></button><button class="category" data-category="BASS">BASSES <b>03</b></button><button class="category" data-category="LEAD">LEADS <b>03</b></button><button class="category" data-category="PAD">PADS <b>02</b></button><button class="category" data-category="TEXTURE">TEXTURES <b>04</b></button><div class="preset-actions"><button id="exportPreset">EXPORT JSON</button><label>IMPORT JSON<input type="file" id="importPreset" accept="application/json"></label></div></aside>
+          <div class="preset-list" id="presetList"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="keyboard-footer">
+      <div class="footer-tools"><div class="wheel"><span>MOD</span><i></i></div><div class="wheel"><span>PITCH</span><i></i></div><button id="octaveDown">−</button><b id="octaveLabel">OCT 4</b><button id="octaveUp">+</button></div>
+      <div class="keyboard" id="keyboard"></div>
+      <div class="footer-right"><small>CPU</small><b id="cpuMeter">04%</b><i></i><small>48.0 KHZ</small></div>
+    </footer>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script src="app.js"></script>
+  <script src="advanced.js"></script>
+  <script src="pro.js"></script>
+</body>
+</html>
