@@ -23,9 +23,9 @@ Open `http://localhost:4173`, click a piano key to initialize audio, and play us
 
 ## Workflow and performance
 
-- Editable oscillator routing to Filter A, Filter B, or direct master, plus serial and parallel dual-filter modes. Both filter stages apply cutoff, resonance, drive, and wet/dry mix.
-- Connected oscillator unison, detune, width, pan, phase, random phase, dual-warp depth and warp-mode controls, plus sub shape/direct and noise color/key controls.
-- A removable FX rack with lightweight hyper/dimension, chorus, OTT-style compression, distortion, EQ, reverb, flanger, phaser, convolution-style echo, filter, stereo, mid/side, multiband saturation, and mono-bass branches.
+- Editable oscillator routing to Filter A, Filter B, or direct master, plus serial and parallel dual-filter modes. Filter A is a driven low-pass stage; Filter B adds a compact vowel/formant resonator bank. Both stages apply cutoff, resonance, drive, wet/dry mix, and pan.
+- Connected oscillator unison, detune, width, pan, phase, random phase, dual-warp depth and warp-mode controls, plus sub shape/direct and noise color/key controls. Factory patches materialize complete sound snapshots, the randomizer publishes audible settings immediately, and all eight macros ship with supported matrix assignments.
+- A removable, parameterized FX rack with BUS A, BUS B, and MASTER processing stages plus lightweight hyper/dimension, chorus, OTT-style compression, distortion, EQ, reverb, flanger, phaser, convolution-style echo, filter, stereo, mid/side, multiband saturation, and mono-bass branches.
 - A 16-step clip and arpeggiator editor with audible editable notes, velocity, probability, gate, and ratchet controls.
 - Web MIDI keyboard input, MIDI CC learn from knob context menus, undo/redo history, and A/B patch comparison.
 - Full version-3 preset snapshots save and restore oscillator modes and controls, dual filters, modulation routes, macros, utility engines, FX parameters and inserts, sampler values, quality settings, spectral partials, sequencer steps, and master volume.
