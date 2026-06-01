@@ -1,0 +1,14 @@
+// Final integration layer: keeps visible performance controls synchronized with the shared DSP settings model.
+const polish={scheduled:[]};
+function syncMacros(){synthSettings.macros=$$('.macro .knob').map(knob=>knobValue(knob.closest('.knob-control'))/100);sendSynthSettings()}
+function syncUtilityEngines(){const sub=$('.sub-module'),noise=$('.noise-module');synthSettings.subShape=$('select',sub).value;synthSettings.subDirect=$('input[type=checkbox]',sub).checked;synthSettings.noiseColor=+$$('input[type=range]',noise)[1].value/100;synthSettings.noiseKey=$('input[type=checkbox]',noise).checked;sendSynthSettings()}
+function syncWarps(){ $$('.osc-card').forEach((card,index)=>{const values=$$('.warp input',card),osc=synthSettings.osc[index];osc.warp=+values[0].value/100;osc.warp2=+values[1].value/100});publishAdvanced() }
+function syncFxParams(){const params={};$$('.fx-card:not(.inserted-fx)').forEach(card=>{const name=$('h3',card).textContent,values={};$$('.knob-control',card).forEach(control=>values[$('span',control).textContent.toLowerCase()]=knobValue(control)/100);params[name]=values});synthSettings.fxParams=params;publishAdvanced()}
+const integratedApplyKnob=applyKnob;applyKnob=function(control,value){integratedApplyKnob(control,value);if(control?.classList.contains('macro'))syncMacros();if(control?.closest('.fx-card'))syncFxParams()};
+$$('.macro').forEach(control=>applyKnob(control,knobValue(control)));$$('.warp-row input').forEach(input=>input.addEventListener('input',syncWarps));syncWarps();
+$$('.sub-module select,.sub-module input[type=checkbox],.noise-module input[type=range],.noise-module input[type=checkbox]').forEach(control=>control.addEventListener('input',syncUtilityEngines));syncUtilityEngines();syncFxParams();
+const integratedPatch=applyPatch;applyPatch=function(patch){integratedPatch(patch);syncWarps();syncUtilityEngines();syncMacros();syncFxParams();publishAdvanced()};
+function clearScheduled(){polish.scheduled.splice(0).forEach(id=>clearTimeout(id))}
+const integratedStop=stopSequencer;stopSequencer=function(){clearScheduled();integratedStop()};
+sequencerTick=function(){const step=state.step++%16,config=pro.steps[step],note=config.note??pattern[step];$$('.step').forEach((el,i)=>el.classList.toggle('playing',i===step));if(advanced.sequenceNote!==null)noteOff(advanced.sequenceNote);clearScheduled();advanced.sequenceNote=null;if(note==null||Math.random()*100>config.probability)return;advanced.sequenceNote=note;const duration=60000/(+$('#tempo').value||124)/4,ratchets=Math.max(1,+config.ratchet||1),slice=duration/ratchets,gate=Math.max(.05,config.gate/100);for(let i=0;i<ratchets;i++){polish.scheduled.push(setTimeout(()=>noteOn(note,null,config.velocity/100),i*slice));polish.scheduled.push(setTimeout(()=>noteOff(note),i*slice+slice*gate))}};
+publishAdvanced();

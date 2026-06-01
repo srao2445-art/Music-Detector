@@ -19,13 +19,14 @@ Open `http://localhost:4173`, click a piano key to initialize audio, and play us
 - SFZ pack import for local `.sfz` files selected alongside their audio assets. The parser maps key zones, velocity layers, root keys, loop bounds, loop mode, and loop crossfade values into the sampler.
 - A stereo grain-cloud engine with size, density, position, random position, pitch, spread, and freeze controls.
 - FFT analysis of loaded sample buffers into an editable 32-partial spectral bank with blur, shift, formant, stretch, and freeze-oriented partial capture.
-- Drag modulation sources onto assignable knobs, then edit bipolar depth or remove assignments in the matrix. Sources include LFOs, envelopes, velocity, key tracking, random, note, and macros.
+- Drag modulation sources onto assignable knobs, then edit bipolar depth or remove assignments in the matrix. Sources include LFOs, envelopes, velocity, key tracking, random, note, and synchronized macros. Supported DSP targets include oscillator position, warp, level and pan; filter cutoff, resonance and mix; and FX drive.
 
 ## Workflow and performance
 
-- Editable oscillator routing to Filter A, Filter B, or direct master, plus serial and parallel dual-filter modes.
+- Editable oscillator routing to Filter A, Filter B, or direct master, plus serial and parallel dual-filter modes. Both filter stages apply cutoff, resonance, drive, and wet/dry mix.
+- Connected oscillator unison, detune, width, pan, phase, random phase, dual-warp depth and warp-mode controls, plus sub shape/direct and noise color/key controls.
 - A removable FX rack with lightweight hyper/dimension, chorus, OTT-style compression, distortion, EQ, reverb, flanger, phaser, convolution-style echo, filter, stereo, mid/side, multiband saturation, and mono-bass branches.
-- A 16-step clip and arpeggiator editor with note, velocity, probability, gate, and ratchet controls.
+- A 16-step clip and arpeggiator editor with audible editable notes, velocity, probability, gate, and ratchet controls.
 - Web MIDI keyboard input, MIDI CC learn from knob context menus, undo/redo history, and A/B patch comparison.
 - Master-output WAV recording with record/stop status and one-click export of the latest stereo take.
 - Selectable high, balanced, and eco quality modes; 1×, 2×, and 4× oversampling; configurable polyphony; released-voice-first stealing; and measured AudioWorklet CPU telemetry.
