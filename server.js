@@ -118,8 +118,10 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && route === '/api/admin/logout') { const token = parseCookies(req).studio_session; if (token) sessions.delete(token); res.setHeader('Set-Cookie', 'studio_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'); return json(res, 200, { ok: true }); }
     if (req.method === 'POST' && route === '/api/admin/forgot-password') {
       const input = await body(req); const email = clean(input.email, 200).toLowerCase(); const db = readDb();
-      if (email === db.admin.email.toLowerCase()) { const otp = String(crypto.randomInt(100000, 1000000)); resetRequests.set(email, { hash: crypto.createHash('sha256').update(otp).digest('hex'), expiresAt: Date.now() + 10 * 60 * 1000, attempts: 0 }); await sendOtp(email, otp); }
-      return json(res, 200, { message: 'If that email is registered, a reset code has been sent.' });
+      if (email !== db.admin.email.toLowerCase()) return json(res, 404, { error: 'This email is not registered as the studio admin.' });
+      const otp = String(crypto.randomInt(100000, 1000000)); resetRequests.set(email, { hash: crypto.createHash('sha256').update(otp).digest('hex'), expiresAt: Date.now() + 10 * 60 * 1000, attempts: 0 });
+      const emailed = await sendOtp(email, otp);
+      return json(res, 200, { message: emailed ? 'A six-digit reset code was sent to your email.' : 'Development mode: the reset code was printed in the server terminal.' });
     }
     if (req.method === 'POST' && route === '/api/admin/reset-password') {
       const input = await body(req); const email = clean(input.email, 200).toLowerCase(); const request = resetRequests.get(email); const otpHash = crypto.createHash('sha256').update(clean(input.otp, 10)).digest('hex'); const password = String(input.password || '');

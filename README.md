@@ -19,7 +19,15 @@ Default local credentials (unless changed in `.env` before first launch):
 
 ## Password-reset email setup
 
-Update `.env` with your Resend API key and sender address. If email delivery is not configured and `DEV_SHOW_OTP=true`, reset codes are printed in the server console for local development only.
+The reset form sends a real six-digit OTP email when Resend is configured. Create a Resend account, verify your sending domain, then update `.env`:
+
+```bash
+RESEND_API_KEY=re_your_api_key
+EMAIL_FROM="The Creator Studio <hello@your-verified-domain.com>"
+DEV_SHOW_OTP=false
+```
+
+If `RESEND_API_KEY` is empty and `DEV_SHOW_OTP=true`, reset codes are printed in the Node server terminal for local development only. The reset form clearly reports when this development fallback is being used.
 
 ## Data storage
 

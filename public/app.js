@@ -11,3 +11,17 @@ async function loadSite() {
 function escapeHtml(value = '') { return String(value).replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c])); }
 function escapeAttr(value = '') { return escapeHtml(value); }
 loadSite().catch(console.error);
+
+const menuButton = $('.menu');
+const mobileNav = $('#mobile-nav');
+function setMobileMenu(open) {
+  document.body.classList.toggle('menu-open', open);
+  mobileNav.classList.toggle('open', open);
+  mobileNav.setAttribute('aria-hidden', String(!open));
+  menuButton.setAttribute('aria-expanded', String(open));
+  menuButton.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+}
+menuButton.addEventListener('click', () => setMobileMenu(!mobileNav.classList.contains('open')));
+$$('#mobile-nav a').forEach(link => link.addEventListener('click', () => setMobileMenu(false)));
+window.addEventListener('resize', () => { if (window.innerWidth > 800) setMobileMenu(false); });
+window.addEventListener('keydown', event => { if (event.key === 'Escape') setMobileMenu(false); });
