@@ -1,3 +1,5 @@
+import { AudioEngine, fetchAsBlobUrl, fileToBytes } from './audio-engine.js';
+
 const formats = [
   { id: 'mp3', name: 'MP3', detail: 'Universal', codec: ['-codec:a', 'libmp3lame', '-q:a', '2'] },
   { id: 'wav', name: 'WAV', detail: 'Lossless', codec: ['-codec:a', 'pcm_s16le'] },
@@ -104,20 +106,35 @@ async function selectFile(file) {
   setStep(2);
 }
 
+const CORE_CDNS = [
+  'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd',
+  'https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd',
+];
+
+async function loadCoreAssets() {
+  let lastError;
+  for (const baseUrl of CORE_CDNS) {
+    try {
+      const [coreURL, wasmURL] = await Promise.all([
+        fetchAsBlobUrl(`${baseUrl}/ffmpeg-core.js`, 'text/javascript'),
+        fetchAsBlobUrl(`${baseUrl}/ffmpeg-core.wasm`, 'application/wasm'),
+      ]);
+      return { coreURL, wasmURL };
+    } catch (error) {
+      lastError = error;
+      console.warn(`WaveShift could not load the audio engine from ${baseUrl}:`, error);
+    }
+  }
+  throw new Error(`The browser could not download the private audio engine. ${lastError?.message || ''}`);
+}
+
 async function ensureFFmpeg() {
   if (ffmpeg) return ffmpeg;
   $('#progressText').textContent = 'Loading the private audio engine for the first time';
-  const [{ FFmpeg }, { toBlobURL }] = await Promise.all([
-    import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js'),
-    import('https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js'),
-  ]);
-  ffmpeg = new FFmpeg();
-  ffmpeg.on('progress', ({ progress }) => updateProgress(Math.max(16, Math.round(progress * 100))));
-  const coreBase = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
-  await ffmpeg.load({
-    coreURL: await toBlobURL(`${coreBase}/ffmpeg-core.js`, 'text/javascript'),
-    wasmURL: await toBlobURL(`${coreBase}/ffmpeg-core.wasm`, 'application/wasm'),
-  });
+  const engine = new AudioEngine();
+  engine.on('progress', ({ progress }) => updateProgress(Math.max(16, Math.round(progress * 100))));
+  await engine.load(await loadCoreAssets());
+  ffmpeg = engine;
   return ffmpeg;
 }
 
@@ -137,12 +154,9 @@ async function convert() {
   const inputName = `input.${inputExtension}`;
   const outputName = `${stripExtension(inputFile.name)}.${selectedFormat.id}`;
   try {
-    const [{ fetchFile }, engine] = await Promise.all([
-      import('https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js'),
-      ensureFFmpeg(),
-    ]);
+    const engine = await ensureFFmpeg();
     updateProgress(14);
-    await engine.writeFile(inputName, await fetchFile(inputFile));
+    await engine.writeFile(inputName, await fileToBytes(inputFile));
     await engine.exec(['-i', inputName, '-vn', ...selectedFormat.codec, outputName]);
     const bytes = await engine.readFile(outputName);
     await engine.deleteFile(inputName);
@@ -162,7 +176,9 @@ async function convert() {
     console.error(error);
     showView('workspaceView');
     setStep(2);
-    notify('Conversion could not be completed. Check your connection for the first engine load, then try another audio file.');
+    notify(error.message.includes('download')
+      ? 'The private audio engine could not be downloaded. Check your connection or content blocker, then try again.'
+      : 'This audio file could not be converted to the selected format. Please try another format or file.');
   }
 }
 
