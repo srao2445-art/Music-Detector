@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#07111f" />
+    <title>WaveShift — Audio converter</title>
+    <meta name="description" content="Convert your audio privately in your browser with WaveShift." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-glow glow-one"></div>
+    <div class="page-glow glow-two"></div>
+    <header class="site-header">
+      <a class="brand" href="#" aria-label="WaveShift home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span>Wave<span>Shift</span></span>
+      </a>
+      <div class="header-badges">
+        <span class="pill secure-pill"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 19 6v5c0 4.7-2.9 8.5-7 10-4.1-1.5-7-5.3-7-10V6l7-3Z"/><path d="m9.5 12 1.7 1.7 3.5-3.8"/></svg> Private & secure</span>
+        <span class="pill local-pill">100% local</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="eyebrow"><span class="pulse"></span> Studio-grade audio tools</div>
+        <h1>Convert audio.<br /><span>Keep the quality.</span></h1>
+        <p>Transform any track into the format you need. Lightning fast, beautifully simple, and completely private.</p>
+      </section>
+
+      <section class="converter-shell" aria-label="Audio converter">
+        <div class="steps">
+          <div class="step active" data-step="1"><span>1</span><b>Upload</b></div>
+          <div class="step-line"><i></i></div>
+          <div class="step" data-step="2"><span>2</span><b>Format</b></div>
+          <div class="step-line"><i></i></div>
+          <div class="step" data-step="3"><span>3</span><b>Convert</b></div>
+        </div>
+
+        <div class="tool-card">
+          <section class="upload-view" id="uploadView">
+            <input id="fileInput" type="file" accept="audio/*,.mp3,.wav,.flac,.m4a,.aac,.ogg,.opus,.wma,.aiff" hidden />
+            <button class="drop-zone" id="dropZone" type="button">
+              <span class="upload-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4m0 0L8 8m4-4 4 4"/><path d="M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>
+              </span>
+              <strong>Drop your audio file here</strong>
+              <small>or click to browse from your device</small>
+              <em>Supports MP3, WAV, FLAC, M4A, AAC, OGG, OPUS, WMA, AIFF and more</em>
+            </button>
+            <div class="trust-row">
+              <span><svg viewBox="0 0 24 24"><path d="M12 3 19 6v5c0 4.7-2.9 8.5-7 10-4.1-1.5-7-5.3-7-10V6l7-3Z"/><path d="m9.5 12 1.7 1.7 3.5-3.8"/></svg> Browser-only processing</span>
+              <span><svg viewBox="0 0 24 24"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="8"/></svg> Files erased when you leave</span>
+            </div>
+          </section>
+
+          <section class="workspace-view hidden" id="workspaceView">
+            <div class="file-panel">
+              <div class="album-icon"><svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/></svg></div>
+              <div class="file-meta">
+                <span class="mini-label">Your audio</span>
+                <h2 id="fileName">track-name.mp3</h2>
+                <p><span id="fileType">MP3 audio</span><i></i><span id="fileSize">0 MB</span></p>
+              </div>
+              <button class="icon-button" id="removeButton" type="button" aria-label="Remove selected file"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+            </div>
+
+            <div class="format-section">
+              <div class="section-heading">
+                <div><span class="mini-label">Output format</span><h3>Choose your destination</h3></div>
+                <span class="quality"><i></i> Best quality</span>
+              </div>
+              <div class="format-grid" id="formatGrid"></div>
+            </div>
+
+            <div class="convert-footer">
+              <div class="privacy-note"><svg viewBox="0 0 24 24"><path d="M7 11V8a5 5 0 0 1 10 0v3"/><rect x="5" y="11" width="14" height="10" rx="2"/></svg><span><b>Private conversion</b><small>Processed locally on your device</small></span></div>
+              <button class="convert-button" id="convertButton" type="button"><span>Convert audio</span><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
+            </div>
+          </section>
+
+          <section class="progress-view hidden" id="progressView">
+            <span class="processing-icon"><span></span><svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/></svg></span>
+            <span class="mini-label">Processing locally</span>
+            <h2>Crafting your audio...</h2>
+            <p id="progressText">Preparing the browser audio engine</p>
+            <div class="progress-track"><i id="progressBar"></i></div>
+            <b class="progress-value" id="progressValue">0%</b>
+          </section>
+
+          <section class="success-view hidden" id="successView">
+            <span class="success-icon"><svg viewBox="0 0 24 24"><path d="m7 12 3.2 3.2L17.5 8"/></svg></span>
+            <span class="mini-label">Conversion complete</span>
+            <h2>Your audio is ready!</h2>
+            <p id="successText">Your file has been converted and is ready to download.</p>
+            <div class="result-card">
+              <div class="result-file"><span class="tiny-wave"><i></i><i></i><i></i></span><div><b id="resultName">track.wav</b><small id="resultSize">0 MB</small></div></div>
+              <a class="download-button" id="downloadButton" download><svg viewBox="0 0 24 24"><path d="M12 4v11m0 0 4-4m-4 4-4-4"/><path d="M5 19h14"/></svg> Download</a>
+            </div>
+            <button class="again-button" id="againButton" type="button">Convert another file <span>↗</span></button>
+          </section>
+        </div>
+      </section>
+
+      <section class="feature-row">
+        <article><span>✦</span><div><b>Every format</b><small>All the formats you love</small></div></article>
+        <article><span>⚡</span><div><b>Lightning fast</b><small>Powered by your browser</small></div></article>
+        <article><span>♢</span><div><b>Crystal clear</b><small>Keep every detail intact</small></div></article>
+      </section>
+    </main>
+
+    <footer><span>Files are temporarily kept in this browser only and automatically erased when you close or leave this page.</span></footer>
+    <div class="toast" id="toast" role="status"></div>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
