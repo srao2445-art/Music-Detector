@@ -1,10 +1,7 @@
 require('dotenv').config();
-const { ensureAdmin, dbPath } = require('../db');
-ensureAdmin()
-  .then((created) => {
-    console.log(created ? `Database initialized and admin created at ${dbPath}` : `Database already initialized at ${dbPath}`);
-  })
-  .catch((error) => {
-    console.error(error.message);
-    process.exitCode = 1;
-  });
+const { initializeDatabase, pool } = require('../db');
+
+initializeDatabase()
+  .then((created) => console.log(created ? 'PostgreSQL initialized and admin created with a bcrypt hash.' : 'PostgreSQL initialized; admin already exists.'))
+  .catch((error) => { console.error(`Database initialization failed: ${error.message}`); process.exitCode = 1; })
+  .finally(() => pool.end());

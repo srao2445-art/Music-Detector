@@ -1,8 +1,7 @@
 node_modules/
 .env
-data/*.db
-data/*.db-*
-uploads/*
-!uploads/.gitkeep
+.env.*
+!.env.example
 .DS_Store
 npm-debug.log*
+coverage/
