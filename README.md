@@ -30,7 +30,8 @@ Open `http://localhost:4173`, click a piano key to initialize audio, and play us
 - Web MIDI keyboard input, MIDI CC learn from knob context menus, undo/redo history, and A/B patch comparison.
 - Full version-3 preset snapshots save and restore oscillator modes and controls, dual filters, modulation routes, macros, utility engines, FX parameters and inserts, sampler values, quality settings, spectral partials, sequencer steps, and master volume.
 - Master-output WAV recording with record/stop status and one-click export of the latest stereo take.
-- Selectable high, balanced, and eco quality modes; 1×, 2×, and 4× oversampling; configurable polyphony; released-voice-first stealing; and measured AudioWorklet CPU telemetry.
+- Selectable high, balanced, and eco quality modes; 1×, 2×, and 4× oversampling; configurable polyphony; released-voice-first stealing; measured AudioWorklet CPU telemetry; a single coalesced UI-to-DSP publication path; and one sequencer transport clock.
+- AudioWorklet mode renders its FX exclusively inside the worklet. The reduced compatibility mode alone uses native Web Audio distortion, delay, and reverb nodes, avoiding double-processing during normal playback.
 - Optional local WASM clipping: place your untracked `dsp-core.wasm.base64.txt` beside `index.html` to enable the WASM `soft_clip` kernel. The browser decodes and transfers it to the worklet at runtime. If the local file is absent, the synth automatically keeps using its JavaScript soft-clipping fallback. You may also keep an untracked local `dsp-core.c` beside `index.html` when you want to rebuild the Base64 module. No C source, compiled WASM binary, or encoded WASM artifact is committed.
 
 ## Scope and next architecture steps
