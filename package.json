@@ -1,0 +1,14 @@
+{
+  "name": "the-creator-studio-firebase",
+  "version": "3.0.0",
+  "private": true,
+  "description": "Firebase Spark-plan compatible static portfolio website and admin dashboard.",
+  "scripts": {
+    "start": "firebase emulators:start --only hosting,firestore",
+    "deploy": "firebase deploy",
+    "check": "node --check public/js/firebase-config.js && node --check public/js/firebase.js && node --check public/js/defaults.js && node --check public/js/site.js && node --check public/js/admin.js"
+  },
+  "devDependencies": {
+    "firebase-tools": "^14.0.0"
+  }
+}
