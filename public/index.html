@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Simtolite Lighting is a bright, modern lighting store for LED, smart, decorative, indoor, and outdoor lighting." />
+    <title>Simtolite Lighting | Premium Lighting Store</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body class="public-body">
+    <div class="top-offer" data-offer-text>Light Up Sale | Premium lighting solutions for every space</div>
+
+    <header class="public-header">
+      <a class="store-brand" href="#home" data-view-link="home" aria-label="Simtolite Lighting home">
+        <span class="store-logo">S</span>
+        <span data-site-name>Simtolite Lighting</span>
+      </a>
+
+      <nav class="desktop-nav" aria-label="Primary navigation">
+        <a href="#home" data-view-link="home">Home</a>
+        <a href="#products" data-view-link="products">Products</a>
+        <a href="#categories" data-view-link="categories">Categories</a>
+        <a href="#gallery" data-view-link="gallery">Gallery</a>
+        <a href="#reviews" data-view-link="reviews">Reviews</a>
+        <a href="#about" data-view-link="about">About</a>
+        <a href="#contact" data-view-link="contact">Contact</a>
+      </nav>
+
+      <div class="header-tools">
+        <label class="store-search" aria-label="Search products">
+          <span aria-hidden="true">⌕</span>
+          <input type="search" data-search-input placeholder="Search lights" />
+        </label>
+        <button class="hamburger" type="button" data-open-drawer aria-label="Open menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </header>
+
+    <aside class="public-drawer" data-public-drawer aria-label="Menu drawer">
+      <div class="drawer-head">
+        <a class="store-brand" href="#home" data-view-link="home"><span class="store-logo">S</span><span>Simtolite</span></a>
+        <button type="button" data-close-drawer aria-label="Close menu">×</button>
+      </div>
+      <nav class="drawer-nav">
+        <a href="#home" data-view-link="home">Home</a>
+        <a href="#products" data-view-link="products">Products</a>
+        <a href="#categories" data-view-link="categories">Categories</a>
+        <a href="#gallery" data-view-link="gallery">Gallery</a>
+        <a href="#reviews" data-view-link="reviews">Reviews</a>
+        <a href="#about" data-view-link="about">About</a>
+        <a href="#contact" data-view-link="contact">Contact</a>
+        <a href="admin.html">Admin Login</a>
+      </nav>
+    </aside>
+    <div class="drawer-backdrop" data-drawer-backdrop></div>
+
+    <main>
+      <section class="view is-active" data-view="home">
+        <section class="hero-bright" data-home-section="hero">
+          <div class="hero-content">
+            <p class="kicker">Modern lighting store</p>
+            <h1 data-hero-title>Premium lights for brighter homes and businesses</h1>
+            <p data-hero-tagline>Shop clean, reliable lighting solutions for every room, store, office, and outdoor space.</p>
+            <div class="hero-actions">
+              <a class="btn primary" data-primary-button href="#products" data-view-link="products">Explore Products</a>
+              <a class="btn secondary" data-secondary-button href="#contact" data-view-link="contact">Contact Us</a>
+            </div>
+          </div>
+          <div class="hero-visual" aria-hidden="true">
+            <div class="fixture fixture-one"></div>
+            <div class="fixture fixture-two"></div>
+            <div class="light-card mini-a">Smart ambience</div>
+            <div class="light-card mini-b">LED savings</div>
+          </div>
+        </section>
+
+        <section class="trust-row page-shell">
+          <article><strong>Free Consultation</strong><span>Lighting guidance for every space</span></article>
+          <article><strong>Quality Products</strong><span>Curated LED and decorative range</span></article>
+          <article><strong>Fast Support</strong><span>Quick phone and WhatsApp response</span></article>
+          <article><strong>Store Deals</strong><span>Clean pricing and seasonal offers</span></article>
+        </section>
+
+        <section class="page-shell home-block" data-home-section="categories">
+          <div class="section-head compact">
+            <div><p class="kicker">Shop by category</p><h2>Main product categories</h2></div>
+            <a href="#categories" data-view-link="categories">View all</a>
+          </div>
+          <div class="category-grid" data-home-categories></div>
+        </section>
+
+        <section class="page-shell home-block" data-home-section="featuredProducts">
+          <div class="section-head compact">
+            <div><p class="kicker">Featured</p><h2>Featured products</h2></div>
+            <a href="#products" data-view-link="products">Shop all</a>
+          </div>
+          <div class="product-grid" data-home-featured></div>
+        </section>
+
+        <section class="page-shell home-block" data-home-section="bestsellers">
+          <div class="section-head compact">
+            <div><p class="kicker">Highlights</p><h2>Bestsellers</h2></div>
+            <a href="#products" data-view-link="products">View products</a>
+          </div>
+          <div class="product-grid" data-home-bestsellers></div>
+        </section>
+
+        <section class="page-shell home-block" data-home-section="galleryPreview">
+          <div class="section-head compact">
+            <div><p class="kicker">Inspiration</p><h2>Gallery preview</h2></div>
+            <a href="#gallery" data-view-link="gallery">Open gallery</a>
+          </div>
+          <div class="gallery-grid preview" data-home-gallery></div>
+        </section>
+
+        <section class="page-shell home-block" data-home-section="reviewsPreview">
+          <div class="section-head compact">
+            <div><p class="kicker">Customers</p><h2>What customers say</h2></div>
+            <a href="#reviews" data-view-link="reviews">Read reviews</a>
+          </div>
+          <div class="review-grid" data-home-reviews></div>
+        </section>
+
+        <section class="page-shell contact-cta" data-home-section="contactCta">
+          <div><p class="kicker">Need help?</p><h2>Get a lighting recommendation today</h2><p data-contact-intro-home>Tell us your room size, mood, and budget. We will suggest the right lighting.</p></div>
+          <a class="btn primary" data-whatsapp-link target="_blank" rel="noopener">WhatsApp Us</a>
+        </section>
+      </section>
+
+      <section class="view" data-view="products">
+        <div class="page-shell page-hero"><p class="kicker">Products</p><h1>Shop lighting products</h1><p>Search, browse by category, and enquire quickly for pricing and availability.</p></div>
+        <div class="page-shell shop-toolbar">
+          <div class="chip-row" data-product-category-filters></div>
+          <span data-results-label></span>
+        </div>
+        <div class="page-shell product-grid" data-products></div>
+      </section>
+
+      <section class="view" data-view="categories">
+        <div class="page-shell page-hero"><p class="kicker">Categories</p><h1>Lighting categories</h1><p>Find the right product family for homes, stores, offices, outdoor projects, and décor.</p></div>
+        <div class="page-shell category-grid full" data-categories></div>
+      </section>
+
+      <section class="view" data-view="gallery">
+        <div class="page-shell page-hero"><p class="kicker">Gallery</p><h1>Project inspiration</h1><p>Lighting ideas and installation previews managed from the admin panel.</p></div>
+        <div class="page-shell gallery-grid" data-gallery></div>
+      </section>
+
+      <section class="view" data-view="reviews">
+        <div class="page-shell page-hero"><p class="kicker">Reviews</p><h1>Customer reviews</h1><p>Feedback from people who chose Simtolite Lighting for their spaces.</p></div>
+        <div class="page-shell review-grid" data-reviews></div>
+      </section>
+
+      <section class="view" data-view="about">
+        <div class="page-shell page-hero"><p class="kicker">About</p><h1 data-about-title>About Simtolite Lighting</h1><p data-about-copy>We help customers choose clean, efficient, premium lighting for homes, retail stores, offices, and outdoor spaces.</p></div>
+        <div class="page-shell why-grid" data-why></div>
+      </section>
+
+      <section class="view" data-view="contact">
+        <div class="page-shell page-hero"><p class="kicker">Contact</p><h1>Contact Simtolite Lighting</h1><p data-contact-intro>Tell us what you need and we will help you choose the right lighting solution.</p></div>
+        <div class="page-shell contact-layout">
+          <div class="contact-panel">
+            <a class="btn primary" data-whatsapp-link target="_blank" rel="noopener">WhatsApp Us</a>
+            <a class="btn secondary" data-phone-link>Call Now</a>
+            <dl>
+              <div><dt>Phone</dt><dd><a data-contact-phone></a></dd></div>
+              <div><dt>Email</dt><dd><a data-contact-email></a></dd></div>
+              <div><dt>Address</dt><dd data-contact-address></dd></div>
+            </dl>
+            <div class="social-links" data-social-links-contact></div>
+          </div>
+          <div class="map-box" data-map-placeholder><span>Map placeholder</span></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="public-footer">
+      <div>
+        <a class="store-brand" href="#home" data-view-link="home"><span class="store-logo">S</span><span data-site-name-footer>Simtolite Lighting</span></a>
+        <p data-footer-info>Premium lighting solutions for every space.</p>
+        <div class="social-links" data-social-links></div>
+      </div>
+      <div><h3>Categories</h3><nav data-footer-categories></nav></div>
+      <div><h3>Quick Links</h3><nav><a href="#products" data-view-link="products">Products</a><a href="#gallery" data-view-link="gallery">Gallery</a><a href="#about" data-view-link="about">About</a><a href="#contact" data-view-link="contact">Contact</a></nav></div>
+      <div><h3>Contact</h3><p data-footer-contact></p><a href="admin.html">Admin Login</a></div>
+    </footer>
+
+    <dialog class="quick-view-modal" data-quick-view>
+      <button class="modal-close" type="button" data-close-modal aria-label="Close quick view">×</button>
+      <div data-quick-view-content></div>
+    </dialog>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

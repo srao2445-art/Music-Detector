@@ -1,0 +1,19 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isApprovedAdmin() {
+      return request.auth != null && request.auth.token.email == "admin@simtolite.com";
+    }
+
+    match /website/{allPaths=**} {
+      allow read: if true;
+      allow write: if isApprovedAdmin()
+        && request.resource.size < 8 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

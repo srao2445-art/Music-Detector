@@ -1,0 +1,17 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isApprovedAdmin() {
+      return request.auth != null && request.auth.token.email == "admin@simtolite.com";
+    }
+
+    match /site/{document=**} {
+      allow read: if true;
+      allow create, update, delete: if isApprovedAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
