@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Simtolite Lighting offers premium LED, decorative, outdoor, and smart lighting solutions." />
+    <title>Simtolite Lighting | Premium Lighting Solutions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#home" aria-label="Simtolite Lighting home">
+        <span class="brand-mark">S</span>
+        <span data-site-name>Simtolite Lighting</span>
+      </a>
+      <button class="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="#products">Products</a>
+        <a href="#gallery">Projects</a>
+        <a href="#why-us">Why Us</a>
+        <a href="#reviews">Reviews</a>
+        <a href="#contact">Contact</a>
+        <a class="nav-admin" href="admin.html">Admin</a>
+      </nav>
+    </header>
+
+    <main>
+      <section id="home" class="hero section-shell">
+        <div class="hero-glow hero-glow-one"></div>
+        <div class="hero-glow hero-glow-two"></div>
+        <div class="hero-copy reveal">
+          <p class="eyebrow">Premium lighting for modern spaces</p>
+          <h1 data-hero-title>Brighten Every Corner With Simtolite Lighting</h1>
+          <p class="hero-tagline" data-hero-tagline>Energy-efficient, stylish, and reliable lighting solutions for homes, shops, offices, and outdoor projects.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" data-primary-button href="#products">View Products</a>
+            <a class="btn btn-secondary" data-secondary-button href="#contact">Contact Us</a>
+          </div>
+          <div class="hero-stats" aria-label="Business highlights">
+            <span><strong>4+</strong> Categories</span>
+            <span><strong>24h</strong> Inquiry Response</span>
+            <span><strong>100%</strong> Quality Focus</span>
+          </div>
+        </div>
+        <div class="hero-visual reveal">
+          <div class="lamp-card">
+            <div class="ceiling-light"></div>
+            <div class="light-beam"></div>
+            <div class="floating-card top-card">Smart ambience</div>
+            <div class="floating-card bottom-card">Warm luxury glow</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="products" class="section-shell reveal">
+        <div class="section-heading">
+          <p class="eyebrow">Shop by style</p>
+          <h2>Product Categories</h2>
+          <p>Explore our fast-moving lighting categories designed for homes, retail showrooms, offices, restaurants, and outdoor spaces.</p>
+        </div>
+        <div class="category-grid" data-categories></div>
+      </section>
+
+      <section class="section-shell reveal">
+        <div class="section-heading split-heading">
+          <div>
+            <p class="eyebrow">Popular picks</p>
+            <h2>Featured Products</h2>
+          </div>
+          <p>Transparent pricing, clear product information, and quick inquiry support.</p>
+        </div>
+        <div class="product-grid" data-products></div>
+      </section>
+
+      <section id="gallery" class="section-shell reveal">
+        <div class="section-heading">
+          <p class="eyebrow">Real installations</p>
+          <h2>Project Gallery</h2>
+          <p>Showcase lighting transformations from residential, commercial, and exterior projects.</p>
+        </div>
+        <div class="gallery-grid" data-gallery></div>
+      </section>
+
+      <section id="why-us" class="section-shell why-section reveal">
+        <div class="section-heading">
+          <p class="eyebrow">Built for trust</p>
+          <h2>Why Choose Us</h2>
+        </div>
+        <div class="why-grid" data-why></div>
+      </section>
+
+      <section id="reviews" class="section-shell reveal">
+        <div class="section-heading split-heading">
+          <div>
+            <p class="eyebrow">Customer words</p>
+            <h2>Reviews & Testimonials</h2>
+          </div>
+          <p>Stories from customers who upgraded their spaces with Simtolite Lighting.</p>
+        </div>
+        <div class="review-grid" data-reviews></div>
+      </section>
+
+      <section id="contact" class="section-shell contact-section reveal">
+        <div class="contact-card">
+          <div>
+            <p class="eyebrow">Let's light it up</p>
+            <h2>Contact Simtolite Lighting</h2>
+            <p data-contact-intro>Tell us about your lighting need and our team will help you choose the right solution.</p>
+            <div class="contact-actions">
+              <a class="btn btn-primary" data-whatsapp-link target="_blank" rel="noopener">WhatsApp Us</a>
+              <a class="btn btn-secondary" data-phone-link>Call Now</a>
+            </div>
+          </div>
+          <div class="contact-details">
+            <p><span>Phone</span><a data-contact-phone></a></p>
+            <p><span>Email</span><a data-contact-email></a></p>
+            <p><span>Address</span><strong data-contact-address></strong></p>
+          </div>
+        </div>
+        <div class="map-placeholder" data-map-placeholder>
+          <span>Map placeholder</span>
+          <p>Embed Google Maps here from the admin contact settings.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div>
+        <a class="brand" href="#home"><span class="brand-mark">S</span><span data-site-name-footer>Simtolite Lighting</span></a>
+        <p data-footer-info>Premium lighting solutions for beautiful, efficient spaces.</p>
+      </div>
+      <div class="social-links" data-social-links></div>
+    </footer>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
