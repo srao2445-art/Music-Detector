@@ -1,6 +1,6 @@
 /* PulseForge Visualizer Studio - vanilla Web Audio + Canvas + WebM export. */
 const canvas = document.getElementById('visualizerCanvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
 
 const aspectRatios = {
   '16:9 YouTube': [16, 9],
@@ -15,6 +15,9 @@ const resolutions = {
   '4K': 2160
 };
 const blendModes = ['source-over', 'screen', 'lighter', 'overlay', 'multiply', 'soft-light'];
+const PREVIEW_MAX_HEIGHT = 720;
+const MOBILE_PREVIEW_MAX_HEIGHT = 540;
+const PREVIEW_DENSITY = 0.72;
 
 let audioContext;
 let analyser;
@@ -23,6 +26,7 @@ let bassFilter;
 let mediaDestination;
 let audioBuffer;
 let sourceNode;
+let activeExportSource;
 let audioFile;
 let audioFileName = '';
 let isPlaying = false;
@@ -38,6 +42,7 @@ let backgroundImage = null;
 let logoImage = null;
 let lastFrameTime = performance.now();
 let statusTimeout;
+let canvasMode = 'preview';
 
 const data = {
   frequency: new Uint8Array(1024),
@@ -225,7 +230,7 @@ function initUI() {
   $('fpsSelect').onchange = e => { project.export.fps = Number(e.target.value); syncExportWarning(); };
   $('qualitySelect').onchange = e => project.export.quality = Number(e.target.value);
   $('exportBtn').onclick = exportWebM;
-  $('cancelExportBtn').onclick = () => { exportAbort = true; if (mediaRecorder?.state === 'recording') mediaRecorder.stop(); };
+  $('cancelExportBtn').onclick = () => { exportAbort = true; if (activeExportSource) { try { activeExportSource.stop(); } catch {} } if (mediaRecorder?.state === 'recording') mediaRecorder.stop(); };
   $('saveProjectBtn').onclick = saveProject;
   $('loadProjectInput').onchange = e => loadProject(e.target.files[0]);
   $('addShapeBtn').onclick = () => { const l = layer('shape', 'Custom shape', { shape: 'circle', fill: project.colors.primary }); project.layers.push(l); selectedLayerId = l.id; syncUI(); };
@@ -344,23 +349,41 @@ function syntheticMetrics() {
   data.waveform.fill(128).forEach((_, i) => data.waveform[i] = 128 + Math.sin(t * 5 + i * 0.04) * 50);
 }
 
-function resizeCanvas() {
+function targetCanvasSize(mode = canvasMode) {
   const [arW, arH] = aspectRatios[project.aspectRatio];
-  const height = resolutions[project.resolution];
-  canvas.height = height;
-  canvas.width = Math.round(height * arW / arH);
+  const exportHeight = resolutions[project.resolution];
+  const previewCap = window.innerWidth < 760 ? MOBILE_PREVIEW_MAX_HEIGHT : PREVIEW_MAX_HEIGHT;
+  const height = mode === 'export' ? exportHeight : Math.min(exportHeight, previewCap);
+  return { width: Math.round(height * arW / arH), height, exportHeight };
+}
+
+function resizeCanvas(mode = 'preview') {
+  canvasMode = mode;
+  const { width, height } = targetCanvasSize(mode);
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+  }
   $('aspectRatioSelect').value = project.aspectRatio;
   $('resolutionSelect').value = project.resolution;
 }
 
 function render(now = performance.now()) {
   animationId = requestAnimationFrame(render);
+  drawFrame(now);
+}
+
+function drawFrame(now = performance.now()) {
   const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
   lastFrameTime = now;
   updateAudioMetrics();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   project.layers.forEach(l => drawLayer(l, now / 1000, dt));
   updateTransport();
+}
+
+function previewDensity() {
+  return canvasMode === 'export' ? 1 : PREVIEW_DENSITY;
 }
 
 function withLayer(l, draw) {
@@ -420,26 +443,32 @@ function drawGlow(strength, radiusFactor) {
   g.addColorStop(0, hexToRgba(project.colors.primary, 0.28 + data.level * 0.22));
   g.addColorStop(0.55, hexToRgba(project.colors.secondary, 0.16));
   g.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.shadowBlur = strength;
+  ctx.shadowBlur = strength * previewDensity();
   ctx.shadowColor = project.colors.primary;
   ctx.fillStyle = g;
   ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
   ctx.shadowBlur = 0;
 }
 function drawSpectrum(anchor) {
-  const count = project.visual.spectrumBarCount;
-  const w = project.visual.barWidth;
-  const gap = project.visual.barSpacing;
+  const density = previewDensity();
+  const count = Math.max(12, Math.round(project.visual.spectrumBarCount * density));
+  const w = project.visual.barWidth * density;
+  const gap = project.visual.barSpacing * density;
   const total = count * (w + gap);
   for (let i = 0; i < count; i++) {
     const bin = Math.floor(i / count * data.frequency.length);
     const amp = Math.pow((data.frequency[bin] || 0) / 255, 1.35) * canvas.height * project.visual.barHeight;
-    const grad = ctx.createLinearGradient(0, -amp, 0, amp);
-    grad.addColorStop(0, project.colors.secondary);
-    grad.addColorStop(1, project.colors.primary);
-    ctx.fillStyle = grad;
-    ctx.shadowBlur = project.visual.glowStrength * 0.35;
-    ctx.shadowColor = project.colors.secondary;
+    if (canvasMode === 'export') {
+      const grad = ctx.createLinearGradient(0, -amp, 0, amp);
+      grad.addColorStop(0, project.colors.secondary);
+      grad.addColorStop(1, project.colors.primary);
+      ctx.fillStyle = grad;
+      ctx.shadowBlur = project.visual.glowStrength * 0.35 * previewDensity();
+      ctx.shadowColor = project.colors.secondary;
+    } else {
+      ctx.fillStyle = i % 2 ? project.colors.secondary : project.colors.primary;
+      ctx.shadowBlur = 0;
+    }
     if (anchor === 'side') ctx.fillRect(-canvas.width * .42, -total / 2 + i * (w + gap), amp * .32, w);
     else ctx.fillRect(-total / 2 + i * (w + gap), canvas.height * .38 - amp, w, amp);
   }
@@ -450,12 +479,13 @@ function drawWaveform(style) {
   ctx.lineWidth = project.visual.waveformThickness;
   ctx.lineCap = 'round';
   ctx.strokeStyle = project.colors.secondary;
-  ctx.shadowBlur = project.visual.glowStrength * 0.35;
+  ctx.shadowBlur = project.visual.glowStrength * 0.35 * previewDensity();
   ctx.shadowColor = project.colors.primary;
   if (style === 'circle') {
     const radius = Math.min(canvas.width, canvas.height) * 0.16;
     ctx.beginPath();
-    for (let i = 0; i < data.waveform.length; i += 8) {
+    const step = canvasMode === 'export' ? 8 : 18;
+    for (let i = 0; i < data.waveform.length; i += step) {
       const a = i / data.waveform.length * Math.PI * 2;
       const v = (data.waveform[i] - 128) / 128;
       const r = radius + v * 42 * project.audio.reaction;
@@ -465,7 +495,8 @@ function drawWaveform(style) {
     ctx.closePath(); ctx.stroke();
   } else {
     ctx.beginPath();
-    for (let i = 0; i < data.waveform.length; i += 12) {
+    const step = canvasMode === 'export' ? 12 : 28;
+    for (let i = 0; i < data.waveform.length; i += step) {
       const x = -width / 2 + i / data.waveform.length * width;
       const v = (data.waveform[i] - 128) / 128;
       const y = v * canvas.height * 0.18;
@@ -478,7 +509,8 @@ function drawWaveform(style) {
   ctx.shadowBlur = 0;
 }
 function drawRadial(t, rings) {
-  const count = Math.min(180, project.visual.spectrumBarCount * 1.4);
+  const density = previewDensity();
+  const count = Math.min(canvasMode === 'export' ? 180 : 96, Math.max(24, Math.round(project.visual.spectrumBarCount * 1.4 * density)));
   const base = Math.min(canvas.width, canvas.height) * project.visual.circularRadius;
   ctx.rotate(t * project.visual.rotationSpeed);
   for (let r = 0; r < rings; r++) {
@@ -488,7 +520,7 @@ function drawRadial(t, rings) {
       const len = 22 + amp * Math.min(canvas.width, canvas.height) * 0.17;
       ctx.strokeStyle = i % 2 ? project.colors.secondary : project.colors.primary;
       ctx.lineWidth = 2 + amp * 5;
-      ctx.shadowBlur = project.visual.glowStrength * 0.45;
+      ctx.shadowBlur = canvasMode === 'export' ? project.visual.glowStrength * 0.45 : 0;
       ctx.shadowColor = ctx.strokeStyle;
       ctx.beginPath();
       const rr = base + r * 38;
@@ -504,7 +536,8 @@ function seedParticles() {
 }
 function drawParticles(dt, count) {
   ctx.fillStyle = project.colors.secondary;
-  for (let i = 0; i < Math.min(count, data.particles.length); i++) {
+  const particleLimit = Math.min(Math.round(count * previewDensity()), data.particles.length);
+  for (let i = 0; i < particleLimit; i++) {
     const p = data.particles[i];
     p.y -= dt * project.visual.particleSpeed * (0.05 + p.z * 0.2) * (1 + data.bass);
     p.x += Math.sin(p.a + performance.now() * 0.0003) * dt * 0.025;
@@ -519,7 +552,7 @@ function drawText() {
   ctx.font = `${project.visual.fontWeight} ${project.visual.fontSize}px Inter, Arial, sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.shadowBlur = project.visual.glowStrength * 0.4;
+  ctx.shadowBlur = project.visual.glowStrength * 0.4 * previewDensity();
   ctx.shadowColor = project.colors.primary;
   ctx.fillStyle = '#ffffff';
   ctx.fillText(project.visual.textContent, 0, 0);
@@ -527,7 +560,7 @@ function drawText() {
 }
 function drawLogoImage() {
   const size = Math.min(canvas.width, canvas.height) * (0.28 + data.bass * 0.035);
-  ctx.shadowBlur = project.visual.glowStrength;
+  ctx.shadowBlur = project.visual.glowStrength * previewDensity();
   ctx.shadowColor = project.colors.primary;
   if (logoImage) {
     ctx.drawImage(logoImage, -size / 2, -size / 2, size, size);
@@ -594,7 +627,9 @@ function updateTimelineVisual() {
 }
 function syncExportWarning() {
   const heavy = project.resolution === '4K' || project.export.fps === 60;
-  $('performanceWarning').textContent = heavy ? '4K or 60 FPS can be heavy on mobile devices.' : '';
+  const { height, exportHeight } = targetCanvasSize('preview');
+  const previewNote = height < exportHeight ? `Preview optimized at ${height}p; export stays ${project.resolution}.` : '';
+  $('performanceWarning').textContent = heavy ? `4K or 60 FPS can be heavy. ${previewNote}` : previewNote;
 }
 
 function syncUI() {
@@ -706,7 +741,10 @@ async function exportWebM() {
   const exportDuration = Math.max(0.25, end - start);
   await ensureAudioGraph();
   if (audioContext.state === 'suspended') await audioContext.resume();
+  resizeCanvas('export');
+  drawFrame(performance.now());
   const exportSource = audioContext.createBufferSource();
+  activeExportSource = exportSource;
   exportSource.buffer = audioBuffer;
   exportSource.connect(bassFilter);
   const videoStream = canvas.captureStream(project.export.fps);
@@ -724,7 +762,10 @@ async function exportWebM() {
     console.error(error);
     setStatus('This browser does not support WebM MediaRecorder export.', 'error');
     stream.getTracks().forEach(track => track.stop());
+    activeExportSource = null;
     exporting = false;
+    resizeCanvas('preview');
+    syncExportWarning();
     $('exportBtn').disabled = false;
     $('cancelExportBtn').disabled = true;
     return;
@@ -734,6 +775,7 @@ async function exportWebM() {
   mediaRecorder.onstop = () => finishExport(chunks, stream, wasPlaying);
   setStatus('Exporting WebM… keep this tab open.', 'success');
   mediaRecorder.start(250);
+  exportSource.onended = () => { activeExportSource = null; };
   exportSource.start(0, start, exportDuration);
   const startWall = performance.now();
   const tick = () => {
@@ -746,7 +788,10 @@ async function exportWebM() {
 }
 function finishExport(chunks, stream, wasPlaying) {
   stream.getTracks().forEach(track => track.stop());
+  if (activeExportSource) { try { activeExportSource.stop(); } catch {} activeExportSource = null; }
   exporting = false;
+  resizeCanvas('preview');
+  syncExportWarning();
   $('exportBtn').disabled = false; $('cancelExportBtn').disabled = true;
   if (!exportAbort) {
     const blob = new Blob(chunks, { type: 'video/webm' });
