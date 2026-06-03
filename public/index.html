@@ -3,91 +3,149 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Simtolite Lighting offers premium LED, decorative, outdoor, and smart lighting solutions." />
-    <title>Simtolite Lighting | Premium Lighting Solutions</title>
+    <meta name="description" content="Shop premium LED, decorative, outdoor, smart, and architectural lighting from Simtolite Lighting." />
+    <title>Simtolite Lighting | Premium Online Lighting Store</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/styles.css" />
   </head>
   <body>
+    <div class="offer-bar" role="note">
+      <span>✦</span>
+      <p data-offer-text>Light Up Sale | Premium lighting solutions for every space</p>
+      <a href="#contact">Get expert help</a>
+    </div>
+
     <header class="site-header">
       <a class="brand" href="#home" aria-label="Simtolite Lighting home">
         <span class="brand-mark">S</span>
-        <span data-site-name>Simtolite Lighting</span>
+        <span class="brand-text" data-site-name>Simtolite Lighting</span>
       </a>
+
       <button class="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button>
+
       <nav class="main-nav" aria-label="Main navigation">
+        <a href="#home">Home</a>
         <a href="#products">Products</a>
-        <a href="#gallery">Projects</a>
-        <a href="#why-us">Why Us</a>
+        <div class="nav-mega-wrap">
+          <a href="#categories" class="mega-trigger">Categories</a>
+          <div class="mega-menu" data-mega-categories></div>
+        </div>
+        <a href="#bestsellers">Bestsellers</a>
+        <a href="#gallery">Gallery</a>
         <a href="#reviews">Reviews</a>
         <a href="#contact">Contact</a>
-        <a class="nav-admin" href="admin.html">Admin</a>
       </nav>
+
+      <div class="header-actions">
+        <label class="search-pill" aria-label="Search products">
+          <span>⌕</span>
+          <input type="search" data-search-input placeholder="Search lights" />
+        </label>
+        <a class="header-whatsapp" data-whatsapp-link-header target="_blank" rel="noopener">WhatsApp</a>
+      </div>
     </header>
 
     <main>
-      <section id="home" class="hero section-shell">
-        <div class="hero-glow hero-glow-one"></div>
-        <div class="hero-glow hero-glow-two"></div>
-        <div class="hero-copy reveal">
-          <p class="eyebrow">Premium lighting for modern spaces</p>
-          <h1 data-hero-title>Brighten Every Corner With Simtolite Lighting</h1>
-          <p class="hero-tagline" data-hero-tagline>Energy-efficient, stylish, and reliable lighting solutions for homes, shops, offices, and outdoor projects.</p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" data-primary-button href="#products">View Products</a>
-            <a class="btn btn-secondary" data-secondary-button href="#contact">Contact Us</a>
+      <section id="home" class="hero-store">
+        <div class="hero-backdrop"></div>
+        <div class="section-shell hero-grid">
+          <div class="hero-copy reveal">
+            <p class="eyebrow">Simtolite premium lighting store</p>
+            <h1 data-hero-title>Brighten Every Corner With Simtolite Lighting</h1>
+            <p class="hero-tagline" data-hero-tagline>Energy-efficient, stylish, and reliable lighting solutions for homes, shops, offices, and outdoor projects.</p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" data-primary-button href="#products">Explore Products</a>
+              <a class="btn btn-secondary" data-secondary-button href="#contact">Contact Us</a>
+            </div>
+            <div class="hero-highlights" aria-label="Store highlights">
+              <span><strong data-product-count>20+</strong> products</span>
+              <span><strong>16</strong> lighting categories</span>
+              <span><strong>24h</strong> support</span>
+            </div>
           </div>
-          <div class="hero-stats" aria-label="Business highlights">
-            <span><strong>4+</strong> Categories</span>
-            <span><strong>24h</strong> Inquiry Response</span>
-            <span><strong>100%</strong> Quality Focus</span>
+
+          <div class="hero-showcase reveal" aria-label="Premium lighting showcase">
+            <div class="showcase-card large-lamp-card">
+              <span class="sale-badge">New collection</span>
+              <div class="pendant-line"></div>
+              <div class="pendant-lamp"></div>
+              <div class="beam beam-one"></div>
+              <div class="beam beam-two"></div>
+              <div class="room-surface"></div>
+            </div>
+            <div class="mini-product-card floating-one">
+              <span>Smart ambience</span>
+              <strong>Warm + RGB</strong>
+            </div>
+            <div class="mini-product-card floating-two">
+              <span>Store-ready</span>
+              <strong>Fast inquiry</strong>
+            </div>
           </div>
         </div>
-        <div class="hero-visual reveal">
-          <div class="lamp-card">
-            <div class="ceiling-light"></div>
-            <div class="light-beam"></div>
-            <div class="floating-card top-card">Smart ambience</div>
-            <div class="floating-card bottom-card">Warm luxury glow</div>
+      </section>
+
+      <section class="trust-strip section-shell reveal" aria-label="Shopping benefits">
+        <article><span>🏷️</span><div><strong>Exclusive Offers</strong><p>Seasonal deals for homes, shops, offices, and contractors.</p></div></article>
+        <article><span>💬</span><div><strong>Free Consultation</strong><p>Get help choosing brightness, color temperature, and style.</p></div></article>
+        <article><span>✅</span><div><strong>Quality Products</strong><p>Reliable lighting selections with premium finishing.</p></div></article>
+        <article><span>🚚</span><div><strong>Fast Local Support</strong><p>Quick response, delivery guidance, and after-sale assistance.</p></div></article>
+      </section>
+
+      <section id="categories" class="section-shell reveal">
+        <div class="section-heading split-heading">
+          <div>
+            <p class="eyebrow">Shop by category</p>
+            <h2>Lighting for every space</h2>
           </div>
+          <p>Browse popular indoor, outdoor, decorative, smart, and utility lighting categories. Tap a category to filter products instantly.</p>
         </div>
+        <div class="category-grid store-category-grid" data-categories></div>
       </section>
 
       <section id="products" class="section-shell reveal">
-        <div class="section-heading">
-          <p class="eyebrow">Shop by style</p>
-          <h2>Product Categories</h2>
-          <p>Explore our fast-moving lighting categories designed for homes, retail showrooms, offices, restaurants, and outdoor spaces.</p>
-        </div>
-        <div class="category-grid" data-categories></div>
-      </section>
-
-      <section class="section-shell reveal">
-        <div class="section-heading split-heading">
+        <div class="store-toolbar">
           <div>
-            <p class="eyebrow">Popular picks</p>
-            <h2>Featured Products</h2>
+            <p class="eyebrow">Sale & featured picks</p>
+            <h2>Premium lighting products</h2>
           </div>
-          <p>Transparent pricing, clear product information, and quick inquiry support.</p>
+          <div class="filter-status">
+            <span data-filter-label>Showing all products</span>
+            <button type="button" data-clear-filter>Clear filter</button>
+          </div>
         </div>
         <div class="product-grid" data-products></div>
       </section>
 
+      <section id="bestsellers" class="section-shell bestseller-section reveal">
+        <div class="section-heading split-heading">
+          <div>
+            <p class="eyebrow">Customer favourites</p>
+            <h2>Bestsellers</h2>
+          </div>
+          <p>Fast-moving lighting options selected from featured products and top store picks.</p>
+        </div>
+        <div class="product-grid compact-products" data-bestsellers></div>
+      </section>
+
       <section id="gallery" class="section-shell reveal">
         <div class="section-heading">
-          <p class="eyebrow">Real installations</p>
-          <h2>Project Gallery</h2>
-          <p>Showcase lighting transformations from residential, commercial, and exterior projects.</p>
+          <p class="eyebrow">Inspiration gallery</p>
+          <h2>Real lighting installations</h2>
+          <p>Premium project visuals for living rooms, retail counters, pathways, restaurants, workspaces, and decorative makeovers.</p>
         </div>
         <div class="gallery-grid" data-gallery></div>
       </section>
 
       <section id="why-us" class="section-shell why-section reveal">
-        <div class="section-heading">
-          <p class="eyebrow">Built for trust</p>
-          <h2>Why Choose Us</h2>
+        <div class="section-heading split-heading">
+          <div>
+            <p class="eyebrow">Why Simtolite</p>
+            <h2>Built for confident buying</h2>
+          </div>
+          <p>Helpful guidance, dependable products, and quick support for small and growing lighting projects.</p>
         </div>
         <div class="why-grid" data-why></div>
       </section>
@@ -95,10 +153,10 @@
       <section id="reviews" class="section-shell reveal">
         <div class="section-heading split-heading">
           <div>
-            <p class="eyebrow">Customer words</p>
-            <h2>Reviews & Testimonials</h2>
+            <p class="eyebrow">Customer stories</p>
+            <h2>Reviews & testimonials</h2>
           </div>
-          <p>Stories from customers who upgraded their spaces with Simtolite Lighting.</p>
+          <p>Real feedback from customers who upgraded homes, stores, and commercial spaces.</p>
         </div>
         <div class="review-grid" data-reviews></div>
       </section>
@@ -106,8 +164,8 @@
       <section id="contact" class="section-shell contact-section reveal">
         <div class="contact-card">
           <div>
-            <p class="eyebrow">Let's light it up</p>
-            <h2>Contact Simtolite Lighting</h2>
+            <p class="eyebrow">Need lighting advice?</p>
+            <h2>Talk to Simtolite Lighting</h2>
             <p data-contact-intro>Tell us about your lighting need and our team will help you choose the right solution.</p>
             <div class="contact-actions">
               <a class="btn btn-primary" data-whatsapp-link target="_blank" rel="noopener">WhatsApp Us</a>
@@ -128,12 +186,34 @@
     </main>
 
     <footer class="site-footer">
-      <div>
+      <div class="footer-column footer-about">
         <a class="brand" href="#home"><span class="brand-mark">S</span><span data-site-name-footer>Simtolite Lighting</span></a>
         <p data-footer-info>Premium lighting solutions for beautiful, efficient spaces.</p>
+        <div class="social-links" data-social-links></div>
       </div>
-      <div class="social-links" data-social-links></div>
+      <div class="footer-column">
+        <h3>Product Categories</h3>
+        <div class="footer-links" data-footer-categories></div>
+      </div>
+      <div class="footer-column">
+        <h3>Quick Links</h3>
+        <a href="#home">Home</a>
+        <a href="#products">Products</a>
+        <a href="#bestsellers">Bestsellers</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#reviews">Reviews</a>
+      </div>
+      <div class="footer-column">
+        <h3>Contact</h3>
+        <p data-footer-contact></p>
+        <a href="admin.html" class="footer-admin">Admin Login</a>
+      </div>
     </footer>
+
+    <dialog class="quick-view-modal" data-quick-view>
+      <button class="modal-close" type="button" data-close-modal aria-label="Close quick view">×</button>
+      <div data-quick-view-content></div>
+    </dialog>
 
     <script type="module" src="js/app.js"></script>
   </body>
