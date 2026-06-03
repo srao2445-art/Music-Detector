@@ -7,124 +7,111 @@
     <title>Admin | Simtolite Lighting</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/styles.css" />
   </head>
   <body class="admin-body">
-    <section id="login-screen" class="login-card">
-      <a class="brand" href="index.html"><span class="brand-mark">S</span><span>Simtolite Admin</span></a>
-      <h1 style="font-size: 2.5rem; margin-top: 1.5rem;">Secure Login</h1>
-      <p>Sign in with the approved Firebase Authentication admin email to edit website content.</p>
-      <form id="login-form" class="form-grid" style="grid-template-columns: 1fr;">
+    <section id="login-screen" class="admin-login">
+      <form id="login-form" class="login-card">
+        <a class="store-brand" href="index.html"><span class="store-logo">S</span><span>Simtolite Admin</span></a>
+        <h1>Admin login</h1>
+        <p>Use the approved Firebase Authentication account to edit your website.</p>
         <label>Email<input id="login-email" type="email" autocomplete="email" required /></label>
         <label>Password<input id="login-password" type="password" autocomplete="current-password" required /></label>
-        <button class="btn btn-primary" type="submit">Log In</button>
+        <button class="btn primary" type="submit">Log In</button>
+        <p id="login-status" class="status-message" role="status"></p>
       </form>
-      <p id="login-status" class="status-message" role="status"></p>
     </section>
 
-    <section id="admin-screen" class="admin-layout hidden">
-      <aside class="admin-sidebar">
-        <a class="brand" href="index.html"><span class="brand-mark">S</span><span>Simtolite CMS</span></a>
+    <section id="admin-screen" class="admin-shell hidden">
+      <aside class="admin-sidebar" data-admin-sidebar>
+        <a class="store-brand" href="index.html"><span class="store-logo">S</span><span>Simtolite CMS</span></a>
         <p id="admin-email"></p>
-        <nav>
-          <a href="#basics">Basics & Hero</a>
-          <a href="#categories">Categories</a>
-          <a href="#products-admin">Products</a>
-          <a href="#gallery-admin">Gallery</a>
-          <a href="#why-admin">Why Choose Us</a>
-          <a href="#reviews-admin">Reviews</a>
-          <a href="#contact-admin">Contact & Social</a>
-          <a href="#preview-admin">Live Preview</a>
-          <button id="logout-button" type="button">Logout</button>
+        <nav class="admin-nav" aria-label="Admin sections">
+          <button type="button" data-admin-view="dashboard">Dashboard</button>
+          <button type="button" data-admin-view="settings">Site Settings</button>
+          <button type="button" data-admin-view="homepage">Homepage Layout</button>
+          <button type="button" data-admin-view="hero">Hero Section</button>
+          <button type="button" data-admin-view="products">Products</button>
+          <button type="button" data-admin-view="categories">Categories</button>
+          <button type="button" data-admin-view="gallery">Gallery</button>
+          <button type="button" data-admin-view="reviews">Reviews</button>
+          <button type="button" data-admin-view="contact">Contact / Social Links</button>
+          <button type="button" data-admin-view="account">Account / Logout</button>
         </nav>
       </aside>
 
-      <main class="admin-main">
-        <form id="content-form">
-          <section id="basics" class="admin-card">
-            <p class="eyebrow">Website identity</p>
-            <h2>Basics & Hero</h2>
-            <div class="form-grid">
-              <label>Website name<input name="siteName" required /></label>
-              <label>Footer tagline<input name="tagline" /></label>
-              <label>Hero title<input name="hero.title" required /></label>
-              <label>Hero tagline<textarea name="hero.tagline"></textarea></label>
-              <label>Primary button text<input name="hero.primaryButtonText" /></label>
-              <label>Primary button link<input name="hero.primaryButtonUrl" placeholder="#products" /></label>
-              <label>Secondary button text<input name="hero.secondaryButtonText" /></label>
-              <label>Secondary button link<input name="hero.secondaryButtonUrl" placeholder="#contact" /></label>
-            </div>
+      <div>
+        <header class="admin-topbar">
+          <button type="button" data-admin-menu>☰ Menu</button>
+          <strong>Simtolite Admin</strong>
+        </header>
+
+        <main class="admin-main">
+          <section class="admin-section active" data-admin-section="dashboard">
+            <div class="admin-card"><p class="kicker">Dashboard</p><h2>Website summary</h2><div class="summary-grid" data-summary></div></div>
           </section>
 
-          <section id="categories" class="admin-card">
-            <p class="eyebrow">Shop groups</p>
-            <h2>Product Categories</h2>
-            <div class="admin-list" data-editor="categories"></div>
-            <div class="editor-actions"><button class="btn btn-secondary" data-add="categories" type="button">Add Category</button></div>
+          <section class="admin-section" data-admin-section="settings">
+            <div class="admin-card"><p class="kicker">Site Settings</p><h2>Business identity</h2><div class="form-grid">
+              <label>Website name<input name="siteName" data-path="siteName" /></label>
+              <label>Tagline / offer text<input name="tagline" data-path="tagline" /></label>
+              <label>About title<input data-path="about.title" /></label>
+              <label>About copy<textarea data-path="about.copy"></textarea></label>
+            </div></div>
           </section>
 
-          <section id="products-admin" class="admin-card">
-            <p class="eyebrow">Products</p>
-            <h2>Featured Products</h2>
-            <div class="admin-list" data-editor="products"></div>
-            <div class="editor-actions"><button class="btn btn-secondary" data-add="products" type="button">Add Product</button></div>
+          <section class="admin-section" data-admin-section="homepage">
+            <div class="admin-card"><p class="kicker">Homepage Layout</p><h2>Choose homepage sections</h2><div class="form-grid">
+              <label class="check-row"><input type="checkbox" data-path="homepage.showHero" /> Show hero</label>
+              <label class="check-row"><input type="checkbox" data-path="homepage.showCategories" /> Show categories</label>
+              <label class="check-row"><input type="checkbox" data-path="homepage.showFeaturedProducts" /> Show featured products</label>
+              <label class="check-row"><input type="checkbox" data-path="homepage.showBestsellers" /> Show bestsellers</label>
+              <label class="check-row"><input type="checkbox" data-path="homepage.showGalleryPreview" /> Show gallery preview</label>
+              <label class="check-row"><input type="checkbox" data-path="homepage.showReviewsPreview" /> Show reviews preview</label>
+              <label class="check-row"><input type="checkbox" data-path="homepage.showContactCta" /> Show contact CTA</label>
+            </div></div>
           </section>
 
-          <section id="gallery-admin" class="admin-card">
-            <p class="eyebrow">Projects</p>
-            <h2>Gallery Images</h2>
-            <div class="admin-list" data-editor="gallery"></div>
-            <div class="editor-actions"><button class="btn btn-secondary" data-add="gallery" type="button">Add Gallery Item</button></div>
+          <section class="admin-section" data-admin-section="hero">
+            <div class="admin-card"><p class="kicker">Hero Section</p><h2>Homepage hero</h2><div class="form-grid">
+              <label>Hero title<input data-path="hero.title" /></label>
+              <label>Hero tagline<textarea data-path="hero.tagline"></textarea></label>
+              <label>Primary button text<input data-path="hero.primaryButtonText" /></label>
+              <label>Primary button link<input data-path="hero.primaryButtonUrl" /></label>
+              <label>Secondary button text<input data-path="hero.secondaryButtonText" /></label>
+              <label>Secondary button link<input data-path="hero.secondaryButtonUrl" /></label>
+            </div></div>
           </section>
 
-          <section id="why-admin" class="admin-card">
-            <p class="eyebrow">Trust builders</p>
-            <h2>Why Choose Us</h2>
-            <div class="admin-list" data-editor="why"></div>
-            <div class="editor-actions"><button class="btn btn-secondary" data-add="why" type="button">Add Point</button></div>
+          <section class="admin-section" data-admin-section="products"><div class="admin-card"><p class="kicker">Products</p><h2>Manage products</h2><div class="editor-list" data-editor="products"></div><div class="editor-actions"><button class="btn secondary" data-add="products" type="button">Add Product</button></div></div></section>
+          <section class="admin-section" data-admin-section="categories"><div class="admin-card"><p class="kicker">Categories</p><h2>Manage categories</h2><div class="editor-list" data-editor="categories"></div><div class="editor-actions"><button class="btn secondary" data-add="categories" type="button">Add Category</button></div></div></section>
+          <section class="admin-section" data-admin-section="gallery"><div class="admin-card"><p class="kicker">Gallery</p><h2>Manage gallery</h2><p>Paste image URLs. Firebase Storage is not required.</p><div class="editor-list" data-editor="gallery"></div><div class="editor-actions"><button class="btn secondary" data-add="gallery" type="button">Add Gallery Item</button></div></div></section>
+          <section class="admin-section" data-admin-section="reviews"><div class="admin-card"><p class="kicker">Reviews</p><h2>Manage reviews</h2><div class="editor-list" data-editor="reviews"></div><div class="editor-actions"><button class="btn secondary" data-add="reviews" type="button">Add Review</button></div></div></section>
+
+          <section class="admin-section" data-admin-section="contact">
+            <div class="admin-card"><p class="kicker">Contact</p><h2>Contact details</h2><div class="form-grid">
+              <label>Contact intro<textarea data-path="contact.intro"></textarea></label>
+              <label>Phone<input data-path="contact.phone" /></label>
+              <label>WhatsApp number<input data-path="contact.whatsapp" /></label>
+              <label>Email<input type="email" data-path="contact.email" /></label>
+              <label>Address<textarea data-path="contact.address"></textarea></label>
+              <label>Google Maps embed URL<input data-path="contact.mapEmbedUrl" /></label>
+            </div></div>
+            <div class="admin-card"><h2>Social links</h2><div class="editor-list" data-editor="social"></div><div class="editor-actions"><button class="btn secondary" data-add="social" type="button">Add Social Link</button></div></div>
           </section>
 
-          <section id="reviews-admin" class="admin-card">
-            <p class="eyebrow">Testimonials</p>
-            <h2>Customer Reviews</h2>
-            <div class="admin-list" data-editor="reviews"></div>
-            <div class="editor-actions"><button class="btn btn-secondary" data-add="reviews" type="button">Add Review</button></div>
+          <section class="admin-section" data-admin-section="account">
+            <div class="admin-card"><p class="kicker">Account</p><h2>Admin account</h2><p id="account-email"></p><button id="logout-button" class="btn secondary" type="button">Logout</button></div>
           </section>
 
-          <section id="contact-admin" class="admin-card">
-            <p class="eyebrow">Business details</p>
-            <h2>Contact & Social Links</h2>
-            <div class="form-grid">
-              <label>Contact intro<textarea name="contact.intro"></textarea></label>
-              <label>Phone<input name="contact.phone" /></label>
-              <label>WhatsApp number<input name="contact.whatsapp" placeholder="919876543210" /></label>
-              <label>Email<input name="contact.email" type="email" /></label>
-              <label>Address<textarea name="contact.address"></textarea></label>
-              <label>Google Maps embed URL<input name="contact.mapEmbedUrl" placeholder="https://www.google.com/maps/embed?..." /></label>
-            </div>
-            <h3 style="margin-top: 1.5rem;">Social Links</h3>
-            <div class="admin-list" data-editor="social"></div>
-            <div class="editor-actions"><button class="btn btn-secondary" data-add="social" type="button">Add Social Link</button></div>
-          </section>
-
-          <section class="admin-card">
-            <div class="editor-actions">
-              <button id="save-button" class="btn btn-primary" type="submit">Save Website Content</button>
-              <button id="seed-button" class="btn btn-secondary" type="button">Restore Sample Content</button>
-            </div>
+          <div class="admin-card save-bar">
+            <button id="save-button" class="btn primary" type="button">Save Website Content</button>
+            <button id="seed-button" class="btn secondary" type="button">Restore Sample Content</button>
             <p id="save-status" class="status-message" role="status"></p>
-          </section>
-        </form>
-
-        <section id="preview-admin" class="admin-card">
-          <p class="eyebrow">Live preview</p>
-          <h2>Website Preview</h2>
-          <p>After saving, refresh the preview to confirm public website changes.</p>
-          <div class="editor-actions"><button id="refresh-preview" class="btn btn-secondary" type="button">Refresh Preview</button></div>
-          <iframe class="preview-frame" src="index.html" title="Simtolite Lighting public website preview"></iframe>
-        </section>
-      </main>
+          </div>
+        </main>
+      </div>
     </section>
 
     <script type="module" src="js/admin.js"></script>
