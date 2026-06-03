@@ -37,6 +37,7 @@ let activeTab = 'global';
 let backgroundImage = null;
 let logoImage = null;
 let lastFrameTime = performance.now();
+let statusTimeout;
 
 const data = {
   frequency: new Uint8Array(1024),
@@ -114,9 +115,27 @@ const presetDefinitions = [
 
 const $ = id => document.getElementById(id);
 
+function makeId() {
+  if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+  return `layer-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function setStatus(message, tone = 'info') {
+  const el = $('studioStatus');
+  if (!el) return;
+  el.textContent = message;
+  el.dataset.tone = tone;
+  clearTimeout(statusTimeout);
+  if (tone !== 'error') statusTimeout = setTimeout(() => { el.textContent = ''; }, 5000);
+}
+
+function safeName(value = 'visualizer-export') {
+  return (value || 'visualizer-export').trim().replace(/[^a-z0-9-_]+/gi, '-').replace(/^-+|-+$/g, '') || 'visualizer-export';
+}
+
 function layer(type, name, settings = {}) {
   return {
-    id: crypto.randomUUID(),
+    id: makeId(),
     type,
     name,
     visible: true,
@@ -239,18 +258,26 @@ async function ensureAudioGraph() {
 
 async function loadAudio(file) {
   if (!file) return;
-  await ensureAudioGraph();
-  stopAudio();
-  audioFile = file;
-  audioFileName = file.name;
-  const buffer = await file.arrayBuffer();
-  audioBuffer = await audioContext.decodeAudioData(buffer.slice(0));
-  pausedAt = 0;
-  project.timeline.end = duration();
-  $('audioFileName').textContent = audioFileName;
-  $('durationTime').textContent = formatTime(duration());
-  $('dropHint').style.display = 'none';
-  syncTimelineInputs();
+  try {
+    setStatus(`Decoding ${file.name}…`);
+    await ensureAudioGraph();
+    stopAudio();
+    audioFile = file;
+    audioFileName = file.name;
+    const buffer = await file.arrayBuffer();
+    audioBuffer = await audioContext.decodeAudioData(buffer.slice(0));
+    pausedAt = 0;
+    project.timeline.start = 0;
+    project.timeline.end = duration();
+    $('audioFileName').textContent = audioFileName;
+    $('durationTime').textContent = formatTime(duration());
+    $('dropHint').style.display = 'none';
+    syncTimelineInputs();
+    setStatus(`Loaded ${file.name}`, 'success');
+  } catch (error) {
+    console.error(error);
+    setStatus('This browser could not decode that audio file. Try MP3, WAV, OGG, or a supported FLAC file.', 'error');
+  }
 }
 
 function createSource(offset = 0) {
@@ -264,11 +291,11 @@ function createSource(offset = 0) {
 }
 
 async function playAudio() {
-  if (!audioBuffer) return;
+  if (!audioBuffer) { setStatus('Upload an audio file before pressing play.', 'error'); return; }
   await ensureAudioGraph();
   if (audioContext.state === 'suspended') await audioContext.resume();
   if (isPlaying) return;
-  createSource(Math.min(pausedAt, duration() - 0.01));
+  createSource(Math.max(0, Math.min(pausedAt, Math.max(0, duration() - 0.01))));
   isPlaying = true;
 }
 function pauseAudio() {
@@ -584,7 +611,7 @@ function syncUI() {
   syncTimelineInputs();
 }
 function renderLayers() {
-  $('layerList').innerHTML = project.layers.map(l => `<button class="layer-card ${l.id === selectedLayerId ? 'active' : ''}" data-layer="${l.id}"><div class="layer-meta"><strong>${l.name}</strong><label class="toggle-row"><input type="checkbox" ${l.visible ? 'checked' : ''} data-visible="${l.id}"> Visible</label></div><small>${l.type}</small></button>`).join('');
+  $('layerList').innerHTML = project.layers.map(l => `<div class="layer-card ${l.id === selectedLayerId ? 'active' : ''}" role="button" tabindex="0" data-layer="${l.id}"><div class="layer-meta"><strong>${l.name}</strong><label class="toggle-row"><input type="checkbox" ${l.visible ? 'checked' : ''} data-visible="${l.id}"> Visible</label></div><small>${l.type}</small></div>`).join('');
   $('layerList').onclick = e => {
     if (e.target.matches('[data-visible]')) {
       const l = getLayer(e.target.dataset.visible); l.visible = e.target.checked; return;
@@ -652,7 +679,7 @@ function setPath(obj, path, value) {
   const keys = path.split('.');
   let ref = obj;
   keys.slice(0, -1).forEach(k => ref = ref[k]);
-  ref[keys.at(-1)] = value;
+  ref[keys[keys.length - 1]] = value;
 }
 function getLayer(id) { return project.layers.find(l => l.id === id); }
 
@@ -668,26 +695,44 @@ function loadImageFile(file, target) {
 }
 
 async function exportWebM() {
-  if (!audioBuffer || exporting) return alert('Upload and decode an audio file before exporting WebM.');
+  if (!audioBuffer || exporting) { setStatus('Upload and decode an audio file before exporting WebM.', 'error'); return; }
   exporting = true; exportAbort = false;
   $('exportBtn').disabled = true; $('cancelExportBtn').disabled = false; $('exportProgress').style.width = '0%';
   const wasPlaying = isPlaying;
   pauseAudio();
-  const start = project.timeline.fullSong ? 0 : Math.max(0, project.timeline.start);
-  const end = project.timeline.fullSong ? duration() : Math.min(project.timeline.end || duration(), duration());
+  const totalDuration = duration();
+  const start = project.timeline.fullSong ? 0 : Math.max(0, Math.min(project.timeline.start, Math.max(0, totalDuration - 0.25)));
+  const end = project.timeline.fullSong ? totalDuration : Math.max(start + 0.25, Math.min(project.timeline.end || totalDuration, totalDuration));
   const exportDuration = Math.max(0.25, end - start);
   await ensureAudioGraph();
+  if (audioContext.state === 'suspended') await audioContext.resume();
   const exportSource = audioContext.createBufferSource();
   exportSource.buffer = audioBuffer;
   exportSource.connect(bassFilter);
   const videoStream = canvas.captureStream(project.export.fps);
   const tracks = [...videoStream.getVideoTracks(), ...mediaDestination.stream.getAudioTracks()];
   const stream = new MediaStream(tracks);
-  const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus' : 'video/webm';
+  const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+    ? 'video/webm;codecs=vp9,opus'
+    : MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
+      ? 'video/webm;codecs=vp8,opus'
+      : 'video/webm';
   const chunks = [];
-  mediaRecorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: project.export.quality, audioBitsPerSecond: 192000 });
+  try {
+    mediaRecorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: project.export.quality, audioBitsPerSecond: 192000 });
+  } catch (error) {
+    console.error(error);
+    setStatus('This browser does not support WebM MediaRecorder export.', 'error');
+    stream.getTracks().forEach(track => track.stop());
+    exporting = false;
+    $('exportBtn').disabled = false;
+    $('cancelExportBtn').disabled = true;
+    return;
+  }
   mediaRecorder.ondataavailable = e => e.data.size && chunks.push(e.data);
+  mediaRecorder.onerror = event => { console.error(event.error || event); setStatus('WebM recording failed in this browser.', 'error'); };
   mediaRecorder.onstop = () => finishExport(chunks, stream, wasPlaying);
+  setStatus('Exporting WebM… keep this tab open.', 'success');
   mediaRecorder.start(250);
   exportSource.start(0, start, exportDuration);
   const startWall = performance.now();
@@ -708,9 +753,12 @@ function finishExport(chunks, stream, wasPlaying) {
     const url = URL.createObjectURL(blob);
     $('exportPreview').src = url;
     $('downloadLink').href = url;
-    $('downloadLink').download = `${project.export.fileName || 'visualizer-export'}.webm`;
+    $('downloadLink').download = `${safeName(project.export.fileName)}.webm`;
     $('exportResult').classList.remove('hidden');
     $('exportProgress').style.width = '100%';
+    setStatus('WebM export complete.', 'success');
+  } else {
+    setStatus('Export canceled.');
   }
   if (wasPlaying) playAudio();
 }
@@ -721,19 +769,25 @@ function saveProject() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `${project.presetName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.visualizer.json`;
+  a.download = `${safeName(project.presetName.toLowerCase())}.visualizer.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
 async function loadProject(file) {
   if (!file) return;
-  const loaded = JSON.parse(await file.text());
-  Object.assign(project, loaded);
-  audioFileName = loaded.audioFileName || '';
-  $('audioFileName').textContent = audioFileName ? `${audioFileName} (re-upload audio to export)` : 'Project loaded - upload audio';
-  selectedLayerId = project.layers[0]?.id || null;
-  seedParticles();
-  syncUI();
+  try {
+    const loaded = JSON.parse(await file.text());
+    Object.assign(project, loaded);
+    audioFileName = loaded.audioFileName || '';
+    $('audioFileName').textContent = audioFileName ? `${audioFileName} (re-upload audio to export)` : 'Project loaded - upload audio';
+    selectedLayerId = project.layers[0]?.id || null;
+    seedParticles();
+    syncUI();
+    setStatus('Project loaded. Re-upload the audio file before exporting.', 'success');
+  } catch (error) {
+    console.error(error);
+    setStatus('Could not load that project JSON file.', 'error');
+  }
 }
 
 initUI();
