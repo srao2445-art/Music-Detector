@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DrumForge Pro — Browser Drum Sound Designer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">DF</div>
+        <div>
+          <h1>DrumForge Pro</h1>
+          <p>Web Audio drum synthesis workstation</p>
+        </div>
+      </div>
+      <div class="transport-bar">
+        <label>BPM <input id="bpm" type="number" min="40" max="220" value="140" /></label>
+        <label>Swing <input id="swing" type="range" min="0" max="0.65" step="0.01" value="0.12" /></label>
+        <button id="playStop" class="primary">▶ Play</button>
+        <button id="panic">Limiter Reset</button>
+        <div class="master">
+          <span>Master</span>
+          <input id="masterVolume" type="range" min="0" max="1" step="0.01" value="0.78" />
+          <canvas id="meter" width="80" height="28"></canvas>
+        </div>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="modules panel">
+        <div class="panel-head"><h2>Modules</h2><button id="randomPreset">Random</button></div>
+        <div id="moduleList" class="module-list"></div>
+        <div class="macro-box">
+          <h3>Macros</h3>
+          <label>Power <input id="macroPower" type="range" min="0" max="1" step="0.01" value="0.5" /></label>
+          <label>Space <input id="macroSpace" type="range" min="0" max="1" step="0.01" value="0.25" /></label>
+          <label>Dirt <input id="macroDirt" type="range" min="0" max="1" step="0.01" value="0.35" /></label>
+        </div>
+      </aside>
+
+      <section class="designer panel">
+        <div class="panel-head designer-head">
+          <div>
+            <h2 id="activeTitle">Kick Designer</h2>
+            <p id="moduleSubtitle">Pitch, body, click, sub, punch, drive and filters.</p>
+          </div>
+          <div class="designer-actions">
+            <button id="previewDry">Dry</button>
+            <button id="previewWet" class="active">Wet</button>
+            <button id="abSwap">A/B Swap</button>
+            <button id="undo">Undo</button>
+            <button id="redo">Redo</button>
+          </div>
+        </div>
+
+        <div class="visuals">
+          <canvas id="oscilloscope" width="620" height="150"></canvas>
+          <canvas id="spectrum" width="620" height="150"></canvas>
+          <canvas id="waveform" width="620" height="110"></canvas>
+        </div>
+
+        <div class="global-controls">
+          <div class="control-card">
+            <h3>Envelope</h3>
+            <div id="envelopeControls" class="control-grid compact"></div>
+          </div>
+          <div class="control-card">
+            <h3>Pitch / Filter Env</h3>
+            <div id="modControls" class="control-grid compact"></div>
+          </div>
+          <div class="control-card">
+            <h3>Layer Mixer</h3>
+            <div id="layerMixer" class="layer-mixer"></div>
+          </div>
+        </div>
+
+        <div class="section-title">Sound Engine</div>
+        <div id="soundControls" class="control-grid"></div>
+      </section>
+
+      <aside class="fx panel">
+        <div class="panel-head"><h2>FX Rack</h2><button id="bypassFx">Bypass</button></div>
+        <div id="fxControls" class="fx-controls"></div>
+        <div class="preset-box">
+          <h3>Presets</h3>
+          <select id="presetSelect"></select>
+          <div class="preset-actions">
+            <button id="loadPreset">Load</button>
+            <button id="savePreset">Save JSON</button>
+            <button id="importPreset">Import</button>
+            <button id="exportPreset">Export</button>
+            <input id="presetFile" type="file" accept="application/json" hidden />
+          </div>
+        </div>
+        <div class="export-box">
+          <h3>Export</h3>
+          <button id="exportSound">Selected Sound WAV</button>
+          <button id="exportLoop">Full Loop WAV</button>
+          <button id="exportPattern">Pattern JSON</button>
+          <button id="exportMidi">MIDI Pattern</button>
+        </div>
+      </aside>
+    </main>
+
+    <section class="sequencer panel">
+      <div class="panel-head sequencer-head">
+        <div>
+          <h2>Sequencer</h2>
+          <p>16/32 step pattern grid with per-step velocity, swing, mute and solo.</p>
+        </div>
+        <div class="seq-tools">
+          <label>Steps <select id="stepCount"><option>16</option><option>32</option></select></label>
+          <button id="clearPattern">Clear</button>
+          <button id="humanize">Humanize</button>
+          <button id="savePattern">Save</button>
+          <button id="loadPattern">Load</button>
+        </div>
+      </div>
+      <div id="sequencerGrid" class="sequencer-grid"></div>
+    </section>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
