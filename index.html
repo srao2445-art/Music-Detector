@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Echo Atelier — Vintage Algorithmic Reverb</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <section class="hero panel">
+      <div>
+        <p class="eyebrow">Browser AudioWorklet Studio</p>
+        <h1>Echo Atelier</h1>
+        <p class="subtitle">A professional dark, vintage-inspired algorithmic stereo reverb for fast in-browser sound design. No backend, no uploads, no proprietary presets.</p>
+      </div>
+      <div class="status-card" id="supportStatus" role="status">Checking browser support…</div>
+    </section>
+
+    <section class="panel transport-grid">
+      <div class="upload-box">
+        <label for="audioFile" class="file-label">Choose audio file</label>
+        <input id="audioFile" type="file" accept="audio/*" />
+        <div class="file-meta" id="fileMeta">No audio loaded. Max recommended size: 80 MB.</div>
+      </div>
+      <div class="transport">
+        <button id="playBtn" class="primary" disabled>Play</button>
+        <button id="stopBtn" disabled>Stop</button>
+        <button id="exportWavBtn" disabled>Export WAV</button>
+      </div>
+      <div class="toggles">
+        <button id="wetSoloBtn" class="toggle">Wet Solo</button>
+        <button id="bypassBtn" class="toggle">Bypass</button>
+      </div>
+      <canvas id="waveform" width="1200" height="220" aria-label="Audio waveform display"></canvas>
+    </section>
+
+    <section class="panel preset-panel">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Preset Library</p>
+          <h2>Factory & User Presets</h2>
+        </div>
+        <span id="presetLock" class="pill">Factory locked</span>
+      </div>
+      <div class="preset-grid">
+        <label>Category
+          <select id="presetCategory"></select>
+        </label>
+        <label>Preset
+          <select id="presetSelect"></select>
+        </label>
+        <label>Name
+          <input id="presetName" type="text" maxlength="48" />
+        </label>
+      </div>
+      <div class="preset-actions">
+        <button id="savePresetBtn">Save Current Preset</button>
+        <button id="duplicatePresetBtn">Duplicate Preset</button>
+        <button id="exportPresetBtn">Export Preset</button>
+        <label class="import-label">Import Preset<input id="importPresetInput" type="file" accept="application/json,.json" /></label>
+        <button id="resetDefaultBtn">Reset to Default</button>
+      </div>
+      <p id="presetMessage" class="message" role="status"></p>
+    </section>
+
+    <section class="controls-layout">
+      <section class="panel">
+        <div class="section-head"><h2>Reverb Design</h2><span class="pill" id="currentModePill">Plate</span></div>
+        <div class="select-row">
+          <label>Mode / Algorithm
+            <select id="mode">
+              <option>Plate</option><option>Room</option><option>Hall</option><option>Chamber</option><option>Cathedral</option><option>Ambience</option>
+            </select>
+          </label>
+          <label>Vintage Color
+            <select id="color">
+              <option>Dark Vintage</option><option>Bright 80s</option><option>Clean Modern</option>
+            </select>
+          </label>
+        </div>
+        <div id="controls" class="knob-grid"></div>
+      </section>
+
+      <aside class="panel meters">
+        <h2>Engine Notes</h2>
+        <ul>
+          <li>Stereo feedback-delay network with modulated diffusion taps.</li>
+          <li>Predelay, damping, width, tone filters, and gain staging run in real time.</li>
+          <li>Offline WAV export uses the same AudioWorklet processor.</li>
+        </ul>
+        <div class="readout" id="readout"></div>
+        <div class="error" id="errorBox" hidden></div>
+      </aside>
+    </section>
+  </main>
+  <script src="app.js" type="module"></script>
+</body>
+</html>
