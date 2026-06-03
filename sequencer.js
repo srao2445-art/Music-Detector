@@ -20,16 +20,18 @@ export class DrumSequencer {
   humanize() { const p = this.ensurePattern(); Object.values(p.channels).forEach(ch => ch.steps.forEach(st => { if (st.on) st.velocity = Math.max(.18, Math.min(1, st.velocity + (Math.random() - .5) * .28)); })); this.onChange?.(); }
   channelMute(id) { const p = this.ensurePattern(); p.channels[id].mute = !p.channels[id].mute; this.onChange?.(); }
   channelSolo(id) { const p = this.ensurePattern(); p.channels[id].solo = !p.channels[id].solo; this.onChange?.(); }
-  async start() { await this.engine.init(); this.running = true; this.step = 0; this.nextTime = this.engine.context.currentTime + .04; this.schedule(); }
-  stop() { this.running = false; clearTimeout(this.timer); this.onStep?.(-1); }
+  async start() { if (this.running) return; await this.engine.init(); this.engine.setMaster?.(this.getState().masterVolume); this.running = true; this.step = 0; this.nextTime = this.engine.context.currentTime + .04; this.schedule(); }
+  stop() { this.running = false; clearTimeout(this.timer); this.timer = null; this.engine.stopAll?.(); this.onStep?.(-1); }
   togglePlay() { return this.running ? this.stop() : this.start(); }
   schedule() {
     if (!this.running) return;
     const state = this.getState(); const ctx = this.engine.context; const stepDur = 60 / state.bpm / 4;
     while (this.nextTime < ctx.currentTime + .12) {
       const swingOffset = (this.step % 2 ? state.swing * stepDur : 0);
-      this.playStep(this.step, this.nextTime + swingOffset);
-      this.onStep?.(this.step);
+      const scheduledStep = this.step;
+      const scheduledTime = this.nextTime + swingOffset;
+      this.playStep(scheduledStep, scheduledTime);
+      setTimeout(() => { if (this.running) this.onStep?.(scheduledStep); }, Math.max(0, (scheduledTime - ctx.currentTime) * 1000));
       this.nextTime += stepDur; this.step = (this.step + 1) % state.stepCount;
     }
     this.timer = setTimeout(() => this.schedule(), 25);

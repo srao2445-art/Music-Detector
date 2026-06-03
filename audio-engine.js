@@ -18,7 +18,7 @@ export const MODULES = {
 };
 
 export const DEFAULT_ENV = { attack: 0.002, decay: 0.22, sustain: 0.18, release: 0.18, velocity: 0.75, pitchEnv: 0.42, filterEnv: 0.35 };
-export const DEFAULT_FX = { eqLow: 0, eqMid: 0, eqHigh: 0, compressor: 0.35, saturation: 0.25, bitcrush: 0, transient: 0.45, reverb: 0.16, delay: 0.08, softClip: 0.7, limiter: 0.9, output: 0.82 };
+export const DEFAULT_FX = { eqLow: 0, eqMid: 0, eqHigh: 0, compressor: 0.35, saturation: 0.25, bitcrush: 0, transient: 0.45, reverb: 0.16, delay: 0.08, delayFeedback: 0, softClip: 0.7, limiter: 0.9, output: 0.82 };
 
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const expRamp = (param, value, time) => param.exponentialRampToValueAtTime(Math.max(0.0001, value), time);
@@ -42,45 +42,75 @@ export class DrumAudioEngine {
     this.analyser = null;
     this.meter = null;
     this.previewWet = true;
+    this.activeVoices = new Set();
   }
 
   async init() {
-    if (this.context) return;
-    this.context = new AudioContext();
+    if (this.context) {
+      if (this.context.state === 'suspended') await this.context.resume();
+      return;
+    }
+    const Context = globalThis.AudioContext || globalThis.webkitAudioContext;
+    this.context = new Context();
     this.master = this.context.createGain();
     this.analyser = this.context.createAnalyser();
     this.analyser.fftSize = 2048;
     this.meter = this.context.createAnalyser();
     this.meter.fftSize = 256;
+    const safetyClipper = shaper(this.context, 0.55);
     const limiter = this.context.createDynamicsCompressor();
     limiter.threshold.value = -1.5; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.002; limiter.release.value = 0.08;
-    this.master.connect(limiter).connect(this.analyser).connect(this.meter).connect(this.context.destination);
+    this.master.connect(safetyClipper).connect(limiter).connect(this.context.destination);
+    limiter.connect(this.analyser);
+    limiter.connect(this.meter);
   }
 
-  setMaster(value) { if (this.master) this.master.gain.setTargetAtTime(value, this.context.currentTime, 0.015); }
+  setMaster(value) { if (this.master) this.master.gain.setTargetAtTime(clamp(value, 0, 1), this.context.currentTime, 0.015); }
   setWet(enabled) { this.previewWet = enabled; }
-  resetLimiter() { if (this.context) this.master.gain.setValueAtTime(this.master.gain.value, this.context.currentTime); }
+  resetLimiter() { this.stopAll(); if (this.context) this.master.gain.setValueAtTime(this.master.gain.value, this.context.currentTime); }
 
   async trigger(moduleState, velocity = 1, when = 0, output = this.master, wet = this.previewWet) {
     await this.init();
+    if (this.context.state === 'suspended') await this.context.resume();
     const t = when || this.context.currentTime + 0.005;
-    synthesizeModule(this.context, moduleState, output, t, clamp(velocity, 0, 1), wet);
+    const voice = synthesizeModule(this.context, moduleState, output, t, clamp(velocity, 0, 1), wet);
+    if (voice?.cleanup && typeof setTimeout === 'function' && this.context?.constructor?.name !== 'OfflineAudioContext') {
+      const record = { cleanup: voice.cleanup, timer: null };
+      const ms = Math.max(0, (voice.endsAt - this.context.currentTime) * 1000 + 80);
+      record.timer = setTimeout(() => { record.cleanup(); this.activeVoices.delete(record); }, ms);
+      this.activeVoices.add(record);
+    }
+    return voice;
+  }
+
+  stopAll() {
+    this.activeVoices.forEach(record => { clearTimeout(record.timer); record.cleanup?.(); });
+    this.activeVoices.clear();
+    if (this.master && this.context) {
+      const now = this.context.currentTime;
+      const restoreGain = clamp(this.master.gain.value || 0.78, 0, 1);
+      this.master.gain.cancelScheduledValues(now);
+      this.master.gain.setTargetAtTime(0, now, 0.006);
+      setTimeout(() => this.master?.gain.setTargetAtTime(restoreGain, this.context.currentTime, 0.02), 50);
+    }
   }
 }
 
 export function synthesizeModule(ctx, state, destination, time, velocity = 1, wet = true) {
   // Every drum voice is built from Web Audio synthesis layers. Oscillators create pitched body/sub components,
   // generated noise buffers supply snares/claps/cymbals, and envelopes/transient shaping/FX process the result.
-  const dry = ctx.createGain();
-  const fxIn = ctx.createGain();
+  // Sources are created only on trigger, enveloped with short fades, stopped, and disconnected after the voice tail.
+  const cleanupNodes = [];
+  const dry = track(ctx.createGain(), cleanupNodes);
+  const fxIn = track(ctx.createGain(), cleanupNodes);
   dry.gain.value = wet ? 0 : 1;
   fxIn.gain.value = wet ? 1 : 0;
-  const voiceBus = ctx.createGain();
-  const sourceBus = ctx.createGain();
-  applyPreVoiceProcessing(ctx, voiceBus, sourceBus, state);
+  const voiceBus = track(ctx.createGain(), cleanupNodes);
+  const sourceBus = track(ctx.createGain(), cleanupNodes);
+  applyPreVoiceProcessing(ctx, voiceBus, sourceBus, state, cleanupNodes);
   sourceBus.connect(dry).connect(destination);
   sourceBus.connect(fxIn);
-  buildFxRack(ctx, fxIn, destination, state.fx);
+  buildFxRack(ctx, fxIn, destination, state.fx, cleanupNodes);
   const layerActive = layer => isLayerAudible(state.layers, layer);
   const gainFor = layer => (state.layers[layer]?.gain ?? 1) * velocity * (state.env.velocity * velocity + (1 - state.env.velocity));
   const id = state.id;
@@ -92,19 +122,21 @@ export function synthesizeModule(ctx, state, destination, time, velocity = 1, we
   if (id === 'sub808') sub808(ctx, state, voiceBus, time, layerActive, gainFor);
   if (id === 'perc') perc(ctx, state, voiceBus, time, layerActive, gainFor);
   if (id === 'fx') fxHit(ctx, state, voiceBus, time, layerActive, gainFor);
+  const endsAt = time + estimateTail(state) + 0.25;
+  return { endsAt, cleanup: () => cleanupNodes.splice(0).forEach(node => safeDisconnect(node)) };
 }
 
 
-function applyPreVoiceProcessing(ctx, input, output, state) {
+function applyPreVoiceProcessing(ctx, input, output, state, cleanupNodes = []) {
   const p = state.params;
   let node = input;
-  if (p.lowCut || p.highPass) { const hp = makeFilter(ctx, 'highpass', p.lowCut || p.highPass, 0.8 + (state.env.filterEnv || 0) * 4); node.connect(hp); node = hp; }
-  if (p.highCut || p.filter || p.brightness || p.tone) { const lp = makeFilter(ctx, 'lowpass', p.highCut || p.filter || p.brightness || p.tone, 0.8 + (state.env.filterEnv || 0) * 3); node.connect(lp); node = lp; }
+  if (p.lowCut || p.highPass) { const hp = track(makeFilter(ctx, 'highpass', p.lowCut || p.highPass, 0.8 + (state.env.filterEnv || 0) * 4), cleanupNodes); node.connect(hp); node = hp; }
+  if (p.highCut || p.filter || p.brightness || p.tone) { const lp = track(makeFilter(ctx, 'lowpass', p.highCut || p.filter || p.brightness || p.tone, 0.8 + (state.env.filterEnv || 0) * 3), cleanupNodes); node.connect(lp); node = lp; }
   const drive = (p.drive || p.distortion || 0) + (p.softClip || 0) * 0.25 + (state.fx.saturation || 0) * 0.25;
-  if (drive > 0.01) { const sat = shaper(ctx, drive); node.connect(sat); node = sat; }
+  if (drive > 0.01) { const sat = track(shaper(ctx, drive), cleanupNodes); node.connect(sat); node = sat; }
   if (p.width || p.reverbSize) {
-    const spread = ctx.createDelay(0.04); spread.delayTime.value = 0.004 + (p.width || p.reverbSize || 0) * 0.026;
-    const spreadGain = ctx.createGain(); spreadGain.gain.value = (p.width || p.reverbSize || 0) * 0.18;
+    const spread = track(ctx.createDelay(0.04), cleanupNodes); spread.delayTime.value = 0.004 + (p.width || p.reverbSize || 0) * 0.026;
+    const spreadGain = track(ctx.createGain(), cleanupNodes); spreadGain.gain.value = (p.width || p.reverbSize || 0) * 0.18;
     node.connect(spread).connect(spreadGain).connect(output);
   }
   node.connect(output);
@@ -117,7 +149,7 @@ function isLayerAudible(layers, layer) {
 }
 
 function envelope(ctx, node, time, attack, decay, sustain, release, length, peak = 1) {
-  const g = node.gain;
+  const g = node.gain; peak = clamp(peak, 0, 1.4); attack = Math.max(0.0015, attack); release = Math.max(0.008, release);
   g.cancelScheduledValues(time);
   g.setValueAtTime(0.0001, time);
   g.linearRampToValueAtTime(peak, time + Math.max(0.001, attack));
@@ -131,6 +163,7 @@ function osc(ctx, type, freq, dest, time, dur, gain = 1, env = {}) {
   if (env.endFreq) expRamp(o.frequency, env.endFreq, time + env.pitchDecay);
   envelope(ctx, g, time, env.attack ?? 0.001, env.decay ?? dur * 0.35, env.sustain ?? 0.0001, env.release ?? 0.08, dur, gain);
   o.connect(g).connect(dest); o.start(time); o.stop(time + dur + (env.release ?? 0.1) + 0.05);
+  o.onended = () => { safeDisconnect(o); safeDisconnect(g); };
   return o;
 }
 
@@ -144,6 +177,7 @@ function noise(ctx, dest, time, dur, gain = 1, filter = null, env = {}) {
   let last = src;
   if (filter) { const f = ctx.createBiquadFilter(); Object.assign(f, {}); f.type = filter.type; f.frequency.value = filter.freq; f.Q.value = filter.q ?? 0.7; last.connect(f); last = f; }
   last.connect(g).connect(dest); src.start(time); src.stop(time + dur + 0.2);
+  src.onended = () => { safeDisconnect(src); safeDisconnect(g); if (last !== src) safeDisconnect(last); };
 }
 
 function shaper(ctx, amount) {
@@ -209,24 +243,33 @@ function fxHit(ctx, s, dest, t, on, gain) {
   if (on('riser')) noise(ctx, layerBus(ctx, dest, s, t, p.decay, p.riser * gain('riser')), t, p.decay, 0.45, { type: 'bandpass', freq: p.brightness, q: 3 + p.sweep * 8 }, { attack: p.decay * .55, decay: p.decay * .25, release: .3 });
 }
 
+
+function estimateTail(state) {
+  const p = state.params || {};
+  return Math.min(12, Math.max(0.35, p.decay || p.tail || 0, p.release || 0, (p.roomTail || 0) * 2) + (state.fx?.reverb || 0) * 2.8 + (state.fx?.delay || 0) * 0.7 + 0.35);
+}
+
+function track(node, nodes) { nodes?.push(node); return node; }
+function safeDisconnect(node) { try { node?.disconnect?.(); } catch {} }
+
 function makeFilter(ctx, type, freq, q) { const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q; return f; }
 function toneFilters() { /* Voice-level filters are applied in layer buses and the FX rack; retained for readable kick signal flow. */ }
 
-function buildFxRack(ctx, input, destination, fx) {
-  const low = ctx.createBiquadFilter(); low.type = 'lowshelf'; low.frequency.value = 100; low.gain.value = fx.eqLow * 12;
-  const mid = ctx.createBiquadFilter(); mid.type = 'peaking'; mid.frequency.value = 900; mid.Q.value = 0.9; mid.gain.value = fx.eqMid * 12;
-  const high = ctx.createBiquadFilter(); high.type = 'highshelf'; high.frequency.value = 6500; high.gain.value = fx.eqHigh * 12;
-  const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -24 + fx.compressor * 18; comp.ratio.value = 1 + fx.compressor * 11; comp.attack.value = 0.003; comp.release.value = 0.08 + fx.compressor * 0.25;
-  const sat = shaper(ctx, fx.saturation);
-  const crush = bitCrusher(ctx, fx.bitcrush);
-  const trans = ctx.createGain(); trans.gain.value = 0.85 + fx.transient * 0.45;
-  const delay = ctx.createDelay(1); delay.delayTime.value = 0.08 + fx.delay * 0.42;
-  const delayGain = ctx.createGain(); delayGain.gain.value = fx.delay * 0.28;
-  const reverb = convolver(ctx, fx.reverb);
-  const wetRev = ctx.createGain(); wetRev.gain.value = fx.reverb * 0.42;
-  const clip = shaper(ctx, fx.softClip);
-  const limiter = ctx.createDynamicsCompressor(); limiter.threshold.value = -2 - fx.limiter * 8; limiter.ratio.value = 8 + fx.limiter * 12; limiter.attack.value = 0.001; limiter.release.value = 0.05;
-  const out = ctx.createGain(); out.gain.value = fx.output;
+function buildFxRack(ctx, input, destination, fx, cleanupNodes = []) {
+  const low = track(ctx.createBiquadFilter(), cleanupNodes); low.type = 'lowshelf'; low.frequency.value = 100; low.gain.value = fx.eqLow * 12;
+  const mid = track(ctx.createBiquadFilter(), cleanupNodes); mid.type = 'peaking'; mid.frequency.value = 900; mid.Q.value = 0.9; mid.gain.value = fx.eqMid * 12;
+  const high = track(ctx.createBiquadFilter(), cleanupNodes); high.type = 'highshelf'; high.frequency.value = 6500; high.gain.value = fx.eqHigh * 12;
+  const comp = track(ctx.createDynamicsCompressor(), cleanupNodes); comp.threshold.value = -24 + fx.compressor * 18; comp.ratio.value = 1 + fx.compressor * 11; comp.attack.value = 0.003; comp.release.value = 0.08 + fx.compressor * 0.25;
+  const sat = track(shaper(ctx, fx.saturation), cleanupNodes);
+  const crush = track(bitCrusher(ctx, fx.bitcrush), cleanupNodes);
+  const trans = track(ctx.createGain(), cleanupNodes); trans.gain.value = 0.85 + fx.transient * 0.45;
+  const delay = track(ctx.createDelay(1), cleanupNodes); delay.delayTime.value = 0.08 + fx.delay * 0.42;
+  const delayGain = track(ctx.createGain(), cleanupNodes); delayGain.gain.value = fx.delay * (0.16 + (fx.delayFeedback ?? 0) * 0.34);
+  const reverb = track(convolver(ctx, fx.reverb), cleanupNodes);
+  const wetRev = track(ctx.createGain(), cleanupNodes); wetRev.gain.value = fx.reverb * 0.42;
+  const clip = track(shaper(ctx, fx.softClip), cleanupNodes);
+  const limiter = track(ctx.createDynamicsCompressor(), cleanupNodes); limiter.threshold.value = -2 - fx.limiter * 8; limiter.ratio.value = 8 + fx.limiter * 12; limiter.attack.value = 0.001; limiter.release.value = 0.05;
+  const out = track(ctx.createGain(), cleanupNodes); out.gain.value = fx.output;
   input.connect(low).connect(mid).connect(high).connect(comp).connect(sat).connect(crush).connect(trans).connect(clip).connect(limiter).connect(out).connect(destination);
   trans.connect(delay).connect(delayGain).connect(clip);
   trans.connect(reverb).connect(wetRev).connect(clip);

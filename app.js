@@ -1,9 +1,9 @@
 import { DrumAudioEngine, MODULES, createDefaultState } from './audio-engine.js';
+import { $, bindTabs, fmt, label, setPressed } from './ui.js';
 import { PresetManager, BUILT_IN_PRESETS, downloadJson, normalizePattern } from './preset-manager.js';
 import { DrumSequencer } from './sequencer.js';
 import { ExportRenderer } from './export-renderer.js';
 
-const $ = sel => document.querySelector(sel);
 const engine = new DrumAudioEngine();
 const presets = new PresetManager();
 let state = presets.normalize({ ...createDefaultState(), sequence: undefined });
@@ -17,7 +17,7 @@ const envelopeControls = $('#envelopeControls'), modControls = $('#modControls')
 init();
 function init() {
   state = presets.loadLocal();
-  buildModules(); buildPresetList(); bindTopControls(); renderAll(); animateMeters(); bindShortcuts();
+  bindTabs(); buildModules(); buildPresetList(); bindTopControls(); renderAll(); animateMeters(); bindShortcuts();
 }
 
 function active() { return state.modules[state.activeModule]; }
@@ -28,14 +28,15 @@ function change(mutator, rerender = true) { saveHistory(); mutator(); applyMacro
 function buildModules() {
   moduleList.innerHTML = '';
   Object.entries(MODULES).forEach(([id, mod]) => {
-    const btn = document.createElement('button'); btn.className = 'module-button'; btn.dataset.id = id;
-    btn.innerHTML = `<span><strong>${mod.name}</strong><br><small>${mod.subtitle.split('.')[0]}</small></span><span class="mini-toggles"><button data-act="mute">M</button><button data-act="solo">S</button></span>`;
-    btn.addEventListener('click', async e => {
+    const card = document.createElement('article'); card.className = 'module-card'; card.dataset.id = id;
+    card.innerHTML = `<div><strong>${mod.name}</strong><small>${mod.subtitle.split('.')[0]}</small></div><div class="module-actions"><button data-act="mute">M</button><button data-act="solo">S</button></div><button class="module-trigger" data-act="trigger">Tap ${mod.name}</button>`;
+    card.addEventListener('click', async e => {
       const act = e.target.dataset.act;
-      if (act) { e.stopPropagation(); change(() => state.modules[id][act === 'mute' ? 'muted' : 'solo'] = !state.modules[id][act === 'mute' ? 'muted' : 'solo']); return; }
-      change(() => state.activeModule = id); await engine.trigger(active(), 1);
+      if (act === 'mute' || act === 'solo') { e.stopPropagation(); change(() => state.modules[id][act === 'mute' ? 'muted' : 'solo'] = !state.modules[id][act === 'mute' ? 'muted' : 'solo']); return; }
+      if (id !== state.activeModule) change(() => state.activeModule = id);
+      if (act === 'trigger') { e.stopPropagation(); await audition(e.target); }
     });
-    moduleList.appendChild(btn);
+    moduleList.appendChild(card);
   });
 }
 
@@ -43,10 +44,10 @@ function renderAll() {
   renderModules(); renderDesigner(); renderFx(); renderSequencer(); syncHeader(); drawWaveformPreview();
 }
 function renderModules() {
-  [...moduleList.children].forEach(btn => {
-    const id = btn.dataset.id; btn.classList.toggle('active', id === state.activeModule);
-    btn.querySelector('[data-act="mute"]').classList.toggle('active', state.modules[id].muted);
-    btn.querySelector('[data-act="solo"]').classList.toggle('active', state.modules[id].solo);
+  [...moduleList.children].forEach(card => {
+    const id = card.dataset.id; card.classList.toggle('active', id === state.activeModule);
+    card.querySelector('[data-act="mute"]').classList.toggle('active', state.modules[id].muted);
+    card.querySelector('[data-act="solo"]').classList.toggle('active', state.modules[id].solo);
   });
 }
 function renderDesigner() {
@@ -67,7 +68,7 @@ function renderDesigner() {
 
 function renderFx() {
   fxControls.innerHTML = '';
-  const specs = { eqLow: [-1,1], eqMid: [-1,1], eqHigh: [-1,1], compressor: [0,1], saturation: [0,1], bitcrush: [0,1], transient: [0,1], reverb: [0,1], delay: [0,1], softClip: [0,1], limiter: [0,1], output: [0,1.2] };
+  const specs = { eqLow: [-1,1], eqMid: [-1,1], eqHigh: [-1,1], compressor: [0,1], saturation: [0,1], bitcrush: [0,1], transient: [0,1], reverb: [0,1], delay: [0,1], delayFeedback: [0,0.75], softClip: [0,1], limiter: [0,1], output: [0,1.2] };
   Object.entries(specs).forEach(([key, range]) => fxControls.appendChild(controlFor(`fx.${key}`, label(key), [range[0], range[1], active().fx[key]], active().fx[key], 'fx-card')));
 }
 
@@ -83,17 +84,15 @@ function controlFor(path, name, spec, value, cls = 'knob') {
   return card;
 }
 function updatePath(path, value, rerender = true) { change(() => { const [group, key] = path.split('.'); active()[group][key] = value; }, rerender); }
-function label(k) { return k.replace(/([A-Z])/g, ' $1').replace(/^./, m => m.toUpperCase()); }
-function fmt(v) { return Number(v).toFixed(Number(v) >= 10 ? 0 : 2); }
-
 function bindTopControls() {
   $('#bpm').onchange = e => change(() => state.bpm = Number(e.target.value));
   $('#swing').oninput = e => change(() => state.swing = Number(e.target.value), false);
   $('#masterVolume').oninput = e => change(() => { state.masterVolume = Number(e.target.value); engine.setMaster(state.masterVolume); }, false);
-  $('#playStop').onclick = async () => { await sequencer.togglePlay(); $('#playStop').textContent = sequencer.running ? '■ Stop' : '▶ Play'; };
-  $('#panic').onclick = () => engine.resetLimiter();
-  $('#previewDry').onclick = () => { engine.setWet(false); $('#previewDry').classList.add('active'); $('#previewWet').classList.remove('active'); engine.trigger(active()); };
-  $('#previewWet').onclick = () => { engine.setWet(true); $('#previewWet').classList.add('active'); $('#previewDry').classList.remove('active'); engine.trigger(active()); };
+  $('#playStop').onclick = async () => { await sequencer.togglePlay(); $('#playStop').textContent = sequencer.running ? '■ Stop Loop' : '▶ Play Loop'; };
+  $('#panic').onclick = () => { sequencer.stop(); $('#playStop').textContent = '▶ Play Loop'; engine.resetLimiter(); };
+  $('#audition').onclick = e => audition(e.currentTarget);
+  $('#previewDry').onclick = () => { engine.setWet(false); $('#previewDry').classList.add('active'); $('#previewWet').classList.remove('active'); audition($('#audition')); };
+  $('#previewWet').onclick = () => { engine.setWet(true); $('#previewWet').classList.add('active'); $('#previewDry').classList.remove('active'); audition($('#audition')); };
   $('#bypassFx').onclick = () => { engine.setWet(!engine.previewWet); $('#bypassFx').classList.toggle('active', !engine.previewWet); };
   $('#randomPreset').onclick = () => change(randomizeActive);
   $('#humanize').onclick = () => sequencer.humanize(); $('#clearPattern').onclick = () => sequencer.clear();
@@ -122,11 +121,19 @@ async function importFile(e) {
   e.target.value = '';
 }
 
+async function audition(source = $('#audition')) {
+  setPressed(source, true);
+  const velocity = Number($('#auditionVelocity')?.value || 0.9);
+  await engine.init();
+  engine.setMaster(state.masterVolume);
+  await engine.trigger(active(), velocity);
+}
+
 function randomizeActive() {
   const mod = MODULES[state.activeModule];
   Object.entries(mod.params).forEach(([key, spec]) => { if (typeof spec[0] !== 'string') active().params[key] = spec[0] + Math.random() * (spec[1] - spec[0]); });
   Object.keys(active().fx).forEach(k => active().fx[k] = Math.max(0, Math.min(1, active().fx[k] + (Math.random() - .5) * .5)));
-  engine.trigger(active());
+  audition($('#audition'));
 }
 function applyMacros() {
   const m = state.macros; const a = active();
@@ -158,8 +165,9 @@ function paintPlayhead(step) { document.querySelectorAll('.step').forEach(el => 
 function bindShortcuts() {
   document.addEventListener('keydown', e => {
     if (e.target.matches('input,select')) return;
-    if (e.code === 'Space') { e.preventDefault(); $('#playStop').click(); }
-    if (e.key === 'p') engine.trigger(active(), 1);
+    if (e.code === 'Space') { e.preventDefault(); audition($('#audition')); }
+    if (e.key === 'Enter') { e.preventDefault(); $('#playStop').click(); }
+    if (e.key === 'p') audition($('#audition'));
     if ((e.ctrlKey || e.metaKey) && e.key === 'z') restore(undoStack, redoStack);
     if ((e.ctrlKey || e.metaKey) && e.key === 'y') restore(redoStack, undoStack);
   });
