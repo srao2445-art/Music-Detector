@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PulseForge Visualizer Studio</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar glass-panel">
+      <div>
+        <p class="eyebrow">WebM-only creator</p>
+        <h1>PulseForge Visualizer Studio</h1>
+      </div>
+      <div class="top-actions">
+        <label class="file-button">
+          <input id="audioUpload" type="file" accept="audio/mpeg,audio/wav,audio/ogg,audio/flac,audio/*" />
+          Upload Audio
+        </label>
+        <button id="saveProjectBtn" class="ghost-button">Save Project</button>
+        <label class="ghost-button file-button small">
+          <input id="loadProjectInput" type="file" accept=".json,.visualizer.json,application/json" />
+          Load Project
+        </label>
+      </div>
+    </header>
+
+    <main class="studio-grid">
+      <aside class="sidebar glass-panel preset-panel">
+        <section>
+          <div class="section-title">
+            <span>Presets</span>
+            <small id="activePresetLabel">Neon Phonk Circle</small>
+          </div>
+          <div id="presetList" class="preset-list"></div>
+        </section>
+        <section class="layers-section">
+          <div class="section-title">
+            <span>Layers</span>
+            <button id="addShapeBtn" class="mini-button">+ Shape</button>
+          </div>
+          <div id="layerList" class="layer-list"></div>
+        </section>
+      </aside>
+
+      <section class="preview-column">
+        <div class="preview-toolbar glass-panel">
+          <select id="aspectRatioSelect"></select>
+          <select id="resolutionSelect"></select>
+          <button id="fitCanvasBtn" class="ghost-button">Fit Preview</button>
+          <span id="performanceWarning" class="warning-text"></span>
+          <span id="studioStatus" class="status-text" aria-live="polite"></span>
+        </div>
+        <div class="canvas-stage glass-panel">
+          <canvas id="visualizerCanvas" width="1280" height="720" aria-label="Audio visualizer preview"></canvas>
+          <div id="dropHint" class="drop-hint">Upload audio to start rendering reactive visuals</div>
+        </div>
+        <div class="transport glass-panel">
+          <button id="playBtn" class="round-button">▶</button>
+          <button id="pauseBtn" class="round-button">⏸</button>
+          <button id="stopBtn" class="round-button">⏹</button>
+          <span id="currentTime">0:00</span>
+          <input id="seekSlider" type="range" min="0" max="1000" value="0" />
+          <span id="durationTime">0:00</span>
+        </div>
+      </section>
+
+      <aside class="sidebar glass-panel inspector-panel">
+        <div class="section-title">
+          <span>Inspector</span>
+          <small id="selectedLayerName">Global</small>
+        </div>
+        <div class="tabs">
+          <button class="tab active" data-tab="global">Global</button>
+          <button class="tab" data-tab="layer">Layer</button>
+          <button class="tab" data-tab="media">Media</button>
+        </div>
+        <div id="globalControls" class="control-stack tab-panel active"></div>
+        <div id="layerControls" class="control-stack tab-panel"></div>
+        <div id="mediaControls" class="control-stack tab-panel">
+          <label class="control file-control">Background image
+            <input id="backgroundUpload" type="file" accept="image/*" />
+          </label>
+          <label class="control file-control">Logo / cover image
+            <input id="logoUpload" type="file" accept="image/*" />
+          </label>
+          <p class="hint">Images are embedded in the current browser session and can be saved as layer settings when stored as data URLs.</p>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="timeline-panel glass-panel">
+      <div class="timeline-header">
+        <div>
+          <p class="eyebrow">Timeline</p>
+          <strong id="audioFileName">No audio loaded</strong>
+        </div>
+        <div class="timeline-options">
+          <label><input id="fullSongToggle" type="checkbox" checked /> Full song</label>
+          <label>Start <input id="startTimeInput" type="number" min="0" step="0.1" value="0" /></label>
+          <label>End <input id="endTimeInput" type="number" min="0" step="0.1" value="0" /></label>
+        </div>
+      </div>
+      <div id="timelineTrack" class="timeline-track">
+        <div id="timelineRange" class="timeline-range"></div>
+        <div id="playhead" class="playhead"></div>
+      </div>
+      <div class="export-grid">
+        <label>File name <input id="exportFileName" type="text" value="visualizer-export" /></label>
+        <label>FPS <select id="fpsSelect"><option>24</option><option selected>30</option><option>60</option></select></label>
+        <label>Quality <select id="qualitySelect"><option value="2500000">Low</option><option value="6000000" selected>Medium</option><option value="12000000">High</option></select></label>
+        <button id="exportBtn" class="primary-button">Export WebM</button>
+        <button id="cancelExportBtn" class="ghost-button" disabled>Cancel</button>
+      </div>
+      <div class="export-progress-wrap">
+        <div id="exportProgress" class="export-progress"></div>
+      </div>
+      <div id="exportResult" class="export-result hidden">
+        <video id="exportPreview" controls></video>
+        <a id="downloadLink" class="primary-button" download="visualizer-export.webm">Download WebM</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
