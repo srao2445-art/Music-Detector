@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Studio Voice Cleaner</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="hero panel pro-panel">
+      <div class="hero-copy">
+        <p class="eyebrow">Advanced local voice restoration suite</p>
+        <h1>Studio Voice Cleaner</h1>
+        <p class="subtitle">RNNoise WebAssembly denoising first, then offline studio DSP for EQ, de-essing, compression, limiting, and loudness-safe WAV export.</p>
+        <div class="hero-actions" aria-label="Primary actions">
+          <button id="heroStartBtn" class="primary hero-start">Start Recording</button>
+          <button id="heroUploadBtn" class="hero-upload">Upload Audio</button>
+        </div>
+      </div>
+      <div class="studio-console" aria-live="polite">
+        <div class="status-card">
+          <span id="stateDot" class="state-dot"></span>
+          <span id="statusText">Ready</span>
+        </div>
+        <div class="console-readouts">
+          <span><b>Engine</b> RNNoise WASM + DSP</span>
+          <span><b>Export</b> 48 kHz WAV HQ</span>
+          <span><b>Processing</b> 100% local</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="notice">
+      <strong>Important limitation:</strong>
+      Local noise reduction works best on steady noise like fan, room hiss, and low background hum. It may not fully remove voices, traffic, echo, or sudden sounds.
+    </section>
+
+    <section class="signal-chain panel">
+      <div class="chain-step active"><span>01</span><b>RNNoise WASM</b><small>voice denoise</small></div>
+      <div class="chain-step"><span>02</span><b>Residual Polish</b><small>spectral cleanup</small></div>
+      <div class="chain-step"><span>03</span><b>Studio Tone</b><small>EQ + de-ess</small></div>
+      <div class="chain-step"><span>04</span><b>Dynamics</b><small>compress + limit</small></div>
+      <div class="chain-step"><span>05</span><b>Loudness</b><small>normalize + export</small></div>
+    </section>
+
+    <section class="workspace-grid">
+      <div class="panel recorder module-card">
+        <div class="module-heading">
+          <span class="module-number">A</span>
+          <div><h2>Input Deck</h2><p>Capture clean source material or load an existing take.</p></div>
+        </div>
+        <div class="button-row">
+          <button id="recordBtn" class="primary">Start Recording</button>
+          <button id="stopBtn" disabled>Stop</button>
+          <label class="file-button">
+            Upload Audio
+            <input id="fileInput" type="file" accept="audio/*">
+          </label>
+        </div>
+        <p id="recordTimer" class="timer">00:00.0</p>
+        <div class="transport">
+          <button id="playOriginalBtn" disabled>Play Original</button>
+          <button id="playProcessedBtn" disabled>Play Processed</button>
+          <button id="abBtn" disabled>A/B Compare: Original</button>
+        </div>
+        <div class="audio-labels">
+          <span>Before</span><audio id="originalPlayer" controls></audio>
+          <span>After</span><audio id="processedPlayer" controls></audio>
+        </div>
+      </div>
+
+      <div class="panel waveform-panel module-card wide-card">
+        <div class="module-heading split">
+          <div class="heading-left">
+            <span class="module-number">B</span>
+            <div><h2>Waveform Analyzer</h2><p>Inspect the original and processed signals.</p></div>
+          </div>
+          <button id="captureNoiseBtn" disabled>Capture 2s Noise Profile</button>
+        </div>
+        <canvas id="waveform" width="1400" height="360" aria-label="Audio waveform preview"></canvas>
+        <div class="wave-legend"><span class="before-dot"></span>Original <span class="after-dot"></span>Processed</div>
+      </div>
+    </section>
+
+    <section class="panel presets-panel module-card">
+      <div class="module-heading">
+        <span class="module-number">C</span>
+        <div><h2>Mastering Recipes</h2><p>Load calibrated starting points, then fine-tune below.</p></div>
+      </div>
+      <div class="preset-grid">
+        <button class="preset" data-preset="cleanVoice">Clean Voice</button>
+        <button class="preset" data-preset="studioEnhance">Studio Enhance</button>
+        <button class="preset" data-preset="podcastVoice">Podcast Voice</button>
+        <button class="preset" data-preset="lightNoise">Light Noise Reduction</button>
+        <button class="preset" data-preset="strongNoise">Strong Noise Reduction</button>
+      </div>
+    </section>
+
+    <section class="workspace-grid lower-grid">
+      <div class="panel module-card controls-card">
+        <div class="module-heading">
+          <span class="module-number">D</span>
+          <div><h2>Precision Controls</h2><p>Prioritize natural voice preservation, clarity, dynamics, and target loudness.</p></div>
+        </div>
+        <div id="controls" class="controls"></div>
+      </div>
+      <div class="panel render-panel module-card">
+        <div class="module-heading">
+          <span class="module-number">E</span>
+          <div><h2>Render Console</h2><p>Preview quickly or export using the slower highest-quality path.</p></div>
+        </div>
+        <div class="quality-toggle" role="group" aria-label="Quality mode">
+          <label><input type="radio" name="quality" value="fast" checked> Fast Preview Mode</label>
+          <label><input type="radio" name="quality" value="high"> High Quality Export Mode</label>
+        </div>
+        <div class="button-row stack-mobile">
+          <button id="processBtn" class="primary" disabled>Process Preview</button>
+          <button id="downloadBtn" disabled>Download WAV</button>
+        </div>
+        <div class="progress-wrap" aria-live="polite">
+          <div class="progress-bar"><span id="progressBar"></span></div>
+          <p id="progressText">Waiting for audio…</p>
+        </div>
+        <ul class="engine-list">
+          <li>Speech-preserving RNNoise blend is the first cleanup stage.</li>
+          <li>Adaptive residual polish protects speech frequencies, transients, consonants, and sibilants.</li>
+          <li>Dynamic clarity enhancer lifts presence and air without harsh static EQ.</li>
+          <li>Post-denoise chain: gentle EQ/presence, de-esser, expander, transparent compressor, limiter.</li>
+          <li>High Quality Export Mode uses offline rendering and always powers WAV downloads.</li>
+          <li>Limiter and loudness normalization protect against clipping.</li>
+          <li>MP3 export is not included because browsers do not provide reliable built-in MP3 encoding without external encoders.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <script src="wav-export.js"></script>
+  <script src="rnnoise-engine.js"></script>
+  <script src="audio-engine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
