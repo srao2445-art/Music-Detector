@@ -14,6 +14,8 @@
   ];
 
   const els = {
+    heroStartBtn: document.querySelector('#heroStartBtn'),
+    heroUploadBtn: document.querySelector('#heroUploadBtn'),
     recordBtn: document.querySelector('#recordBtn'),
     stopBtn: document.querySelector('#stopBtn'),
     fileInput: document.querySelector('#fileInput'),
@@ -54,6 +56,8 @@
   setStatus('Ready');
 
   function bindEvents() {
+    els.heroStartBtn.addEventListener('click', startRecording);
+    els.heroUploadBtn.addEventListener('click', () => els.fileInput.click());
     els.recordBtn.addEventListener('click', startRecording);
     els.stopBtn.addEventListener('click', stopRecording);
     els.fileInput.addEventListener('change', handleFileUpload);
@@ -117,6 +121,7 @@
       mediaRecorder.start(250);
       recordStart = performance.now();
       timerId = setInterval(updateTimer, 100);
+      els.heroStartBtn.disabled = true;
       els.recordBtn.disabled = true;
       els.stopBtn.disabled = false;
       setStatus('Recording…', 'busy');
@@ -129,6 +134,7 @@
     if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
     if (mediaStream) mediaStream.getTracks().forEach((track) => track.stop());
     clearInterval(timerId);
+    els.heroStartBtn.disabled = false;
     els.recordBtn.disabled = false;
     els.stopBtn.disabled = true;
     setStatus('Decoding recording…', 'busy');
