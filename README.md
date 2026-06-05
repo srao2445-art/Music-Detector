@@ -9,10 +9,10 @@ Studio Voice Cleaner is a complete browser-based voice cleanup app. It records m
 - Before/after waveform preview and playback.
 - First-two-seconds noise profile capture for steady fan, room hiss, and hum.
 - One-click presets: Clean Voice, Studio Enhance, Podcast Voice, Light Noise Reduction, and Strong Noise Reduction.
-- Adjustable noise reduction, gate threshold, clarity, warmth, compression, de-esser, and output loudness controls.
-- RNNoise WebAssembly denoising as the first cleanup stage, followed by deterministic DSP: residual spectral polish, high-pass and low-pass filtering, gate/expander, compressor, de-esser, EQ/presence shaping, limiter, and loudness normalization.
+- Adjustable noise reduction, Voice Protection, gate threshold, clarity, warmth, compression, de-esser, and output loudness controls.
+- Speech-preserving RNNoise WebAssembly denoising as the first cleanup stage, followed by deterministic DSP: adaptive residual spectral polish, dynamic clarity enhancement, high-pass and low-pass filtering, gentle gate/expander, transparent soft-knee compressor, de-esser, EQ/presence shaping, look-ahead limiter, and loudness normalization.
 - Fast Preview Mode for quick checks and High Quality Export Mode for best-quality downloads.
-- WAV export rendered locally with `OfflineAudioContext`; no backend, paid API, or cloud audio processing.
+- WAV export rendered locally with `OfflineAudioContext`; no backend, paid API, or cloud audio processing. The default Voice Protection is 80% so speech quality, clarity, and intelligibility take priority over raw noise suppression.
 
 ## Run locally
 

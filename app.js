@@ -5,6 +5,7 @@
 
   const controlsDefinition = [
     ['nr', 'Noise Reduction Amount', 0, 100, 1, '%'],
+    ['protection', 'Voice Protection', 0, 100, 1, '%'],
     ['gate', 'Gate Threshold', -80, -25, 1, ' dB'],
     ['clarity', 'Voice Clarity', 0, 100, 1, '%'],
     ['warmth', 'Warmth', 0, 100, 1, '%'],

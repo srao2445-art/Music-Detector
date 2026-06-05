@@ -101,7 +101,7 @@
       <div class="panel module-card controls-card">
         <div class="module-heading">
           <span class="module-number">D</span>
-          <div><h2>Precision Controls</h2><p>Shape denoising strength, tone, dynamics, and target loudness.</p></div>
+          <div><h2>Precision Controls</h2><p>Prioritize natural voice preservation, clarity, dynamics, and target loudness.</p></div>
         </div>
         <div id="controls" class="controls"></div>
       </div>
@@ -123,8 +123,10 @@
           <p id="progressText">Waiting for audio…</p>
         </div>
         <ul class="engine-list">
-          <li>RNNoise WebAssembly is the first cleanup stage for voice denoising.</li>
-          <li>Post-denoise chain: EQ/presence, de-esser, expander, compressor, limiter.</li>
+          <li>Speech-preserving RNNoise blend is the first cleanup stage.</li>
+          <li>Adaptive residual polish protects speech frequencies, transients, consonants, and sibilants.</li>
+          <li>Dynamic clarity enhancer lifts presence and air without harsh static EQ.</li>
+          <li>Post-denoise chain: gentle EQ/presence, de-esser, expander, transparent compressor, limiter.</li>
           <li>High Quality Export Mode uses offline rendering and always powers WAV downloads.</li>
           <li>Limiter and loudness normalization protect against clipping.</li>
           <li>MP3 export is not included because browsers do not provide reliable built-in MP3 encoding without external encoders.</li>
