@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Studio Voice Cleaner</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="hero panel">
+      <div>
+        <p class="eyebrow">Local Web Audio Voice Restoration</p>
+        <h1>Studio Voice Cleaner</h1>
+        <p class="subtitle">Record, clean, enhance, compare, and export voice audio directly in your browser — no AI, no cloud, no paid APIs.</p>
+      </div>
+      <div class="status-card" aria-live="polite">
+        <span id="stateDot" class="state-dot"></span>
+        <span id="statusText">Ready</span>
+      </div>
+    </section>
+
+    <section class="notice">
+      <strong>Important limitation:</strong>
+      AI-free noise reduction works best on steady noise like fan, room hiss, and low background hum. It may not fully remove voices, traffic, echo, or sudden sounds.
+    </section>
+
+    <section class="grid two-cols">
+      <div class="panel recorder">
+        <h2>1. Capture or Upload</h2>
+        <div class="button-row">
+          <button id="recordBtn" class="primary">Start Recording</button>
+          <button id="stopBtn" disabled>Stop</button>
+          <label class="file-button">
+            Upload Audio
+            <input id="fileInput" type="file" accept="audio/*">
+          </label>
+        </div>
+        <p id="recordTimer" class="timer">00:00.0</p>
+        <div class="transport">
+          <button id="playOriginalBtn" disabled>Play Original</button>
+          <button id="playProcessedBtn" disabled>Play Processed</button>
+          <button id="abBtn" disabled>A/B Compare: Original</button>
+        </div>
+        <div class="audio-labels">
+          <span>Before</span><audio id="originalPlayer" controls></audio>
+          <span>After</span><audio id="processedPlayer" controls></audio>
+        </div>
+      </div>
+
+      <div class="panel waveform-panel">
+        <div class="section-title">
+          <h2>2. Waveform Preview</h2>
+          <button id="captureNoiseBtn" disabled>Capture 2s Noise Profile</button>
+        </div>
+        <canvas id="waveform" width="1200" height="320" aria-label="Audio waveform preview"></canvas>
+        <div class="wave-legend"><span class="before-dot"></span>Original <span class="after-dot"></span>Processed</div>
+      </div>
+    </section>
+
+    <section class="panel presets-panel">
+      <h2>3. One-Click Voice Recipes</h2>
+      <div class="preset-grid">
+        <button class="preset" data-preset="cleanVoice">Clean Voice</button>
+        <button class="preset" data-preset="studioEnhance">Studio Enhance</button>
+        <button class="preset" data-preset="podcastVoice">Podcast Voice</button>
+        <button class="preset" data-preset="lightNoise">Light Noise Reduction</button>
+        <button class="preset" data-preset="strongNoise">Strong Noise Reduction</button>
+      </div>
+    </section>
+
+    <section class="grid two-cols controls-grid">
+      <div class="panel">
+        <h2>4. Fine Controls</h2>
+        <div id="controls" class="controls"></div>
+      </div>
+      <div class="panel render-panel">
+        <h2>5. Render & Export</h2>
+        <div class="quality-toggle" role="group" aria-label="Quality mode">
+          <label><input type="radio" name="quality" value="fast" checked> Fast Preview Mode</label>
+          <label><input type="radio" name="quality" value="high"> High Quality Export Mode</label>
+        </div>
+        <div class="button-row stack-mobile">
+          <button id="processBtn" class="primary" disabled>Process Preview</button>
+          <button id="downloadBtn" disabled>Download WAV</button>
+        </div>
+        <div class="progress-wrap" aria-live="polite">
+          <div class="progress-bar"><span id="progressBar"></span></div>
+          <p id="progressText">Waiting for audio…</p>
+        </div>
+        <ul class="engine-list">
+          <li>High-pass rumble removal and low-pass hiss control</li>
+          <li>Noise gate, expander, compressor, de-esser, EQ, limiter</li>
+          <li>Spectral subtraction noise reduction from captured profile</li>
+          <li>Offline high-quality rendering and loudness normalization</li>
+          <li>MP3 export is not included because browsers do not provide reliable built-in MP3 encoding without external encoders.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <script src="wav-export.js"></script>
+  <script src="audio-engine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
