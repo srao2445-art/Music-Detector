@@ -1,6 +1,6 @@
 // Studio Voice Cleaner audio engine.
-// This is intentionally AI-free: it uses deterministic DSP with the Web Audio API,
-// OfflineAudioContext rendering, and an FFT-based spectral subtraction pass.
+// RNNoise WASM runs first in rnnoise-engine.js; this file then applies
+// deterministic Web Audio DSP, OfflineAudioContext rendering, and spectral polish.
 (function () {
   'use strict';
 
@@ -24,11 +24,12 @@
   }
 
   async function processAudioBuffer(audioBuffer, settings, noiseProfile, mode, onProgress = () => {}) {
-    const quality = mode === 'high' ? highQualityPlan(audioBuffer.sampleRate) : fastPlan(audioBuffer.sampleRate);
-    onProgress(4, 'Preparing spectral noise reducer…');
+    const rnnoiseBuffer = await RNNoiseWasmDenoiser.denoiseAudioBuffer(audioBuffer, onProgress);
+    const quality = mode === 'high' ? highQualityPlan(rnnoiseBuffer.sampleRate) : fastPlan(rnnoiseBuffer.sampleRate);
+    onProgress(32, 'Preparing residual spectral polish after RNNoise…');
 
-    const spectralBuffer = await runSpectralPasses(audioBuffer, settings, noiseProfile, quality, onProgress);
-    onProgress(62, 'Rendering filters, EQ, expander, compressor, and de-esser…');
+    const spectralBuffer = await runSpectralPasses(rnnoiseBuffer, settings, noiseProfile, quality, onProgress);
+    onProgress(68, 'Offline rendering professional EQ, expander, compressor, and de-esser…');
 
     const rendered = await renderWebAudioChain(spectralBuffer, settings, quality);
     onProgress(84, 'Applying transparent limiter…');
@@ -58,7 +59,7 @@
         const profile = noiseProfile || computeNoiseProfile(input.subarray(0, Math.min(input.length, working.sampleRate * 2)), working.sampleRate, quality.fftSize, Math.floor(quality.fftSize / quality.hopRatio));
         const cleaned = spectralSubtraction(input, profile, settings, quality, working.sampleRate);
         output.copyToChannel(cleaned, channel);
-        onProgress(8 + ((pass * working.numberOfChannels + channel + 1) / (quality.passes * working.numberOfChannels)) * 48, 'Reducing steady room noise and hiss…');
+        onProgress(34 + ((pass * working.numberOfChannels + channel + 1) / (quality.passes * working.numberOfChannels)) * 26, 'Polishing residual steady noise after RNNoise…');
         await yieldToUi();
       }
       working = output;
