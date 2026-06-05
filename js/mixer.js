@@ -1,0 +1,4 @@
+export class Mixer{
+  constructor(ctx){this.ctx=ctx;this.input=ctx.createGain();this.dry=ctx.createGain();this.wet=ctx.createGain();this.merger=ctx.createGain();this.pan=ctx.createStereoPanner();this.output=ctx.createGain();this.limiter=ctx.createDynamicsCompressor();this.analyser=ctx.createAnalyser();this.analyser.fftSize=2048;this.limiter.threshold.value=-1;this.limiter.ratio.value=18;this.limiter.attack.value=.002;this.limiter.release.value=.08;this.input.connect(this.dry).connect(this.merger);this.input.connect(this.wet).connect(this.merger);this.merger.connect(this.pan).connect(this.output).connect(this.limiter).connect(this.analyser).connect(ctx.destination)}
+  update(s){const wet=(s.mixerDryWet??85)/100;this.dry.gain.value=s.mute?0:(1-wet)*(s.mixerVolume??100)/100;this.wet.gain.value=s.mute?0:wet*(s.mixerVolume??100)/100;this.pan.pan.value=(s.mixerPan??0)/100;this.output.gain.value=(s.outputGain??95)/100}
+}

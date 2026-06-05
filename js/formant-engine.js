@@ -1,0 +1,4 @@
+export class FormantEngine{
+  constructor(ctx){this.ctx=ctx;this.input=ctx.createGain();this.output=ctx.createGain();this.low=ctx.createBiquadFilter();this.presence=ctx.createBiquadFilter();this.air=ctx.createBiquadFilter();this.low.type='lowshelf';this.presence.type='peaking';this.air.type='highshelf';this.low.frequency.value=220;this.presence.frequency.value=2400;this.presence.Q.value=.8;this.air.frequency.value=8500;this.input.connect(this.low).connect(this.presence).connect(this.air).connect(this.output)}
+  update(s){const shift=Number(s.formantShift)||0;this.low.gain.value=(s.throatLength||0)/18;this.presence.frequency.value=2400*Math.pow(2,shift/18);this.presence.gain.value=(s.voiceCharacter-50)/10+(s.genderTone||0)/35;this.air.gain.value=(s.naturalness-50)/16;this.output.gain.value=s.formantPreserve?.98:1}
+}
