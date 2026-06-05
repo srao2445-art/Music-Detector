@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VocalTune Studio</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <button id="menuToggle" class="icon-button hamburger" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      <div class="brand"><div class="brand-mark">VT</div><div><strong>VocalTune Studio</strong><small>Browser vocal tuning workstation</small></div></div>
+      <div class="transport">
+        <button id="globalPlay" class="transport-button">▶ Play</button>
+        <button id="globalStop" class="transport-button">■ Stop</button>
+        <button id="globalRecord" class="record-button">● Record</button>
+      </div>
+      <div class="status-pill" id="audioStatus">Audio idle</div>
+    </header>
+
+    <aside id="sideNav" class="side-nav" aria-label="Main navigation">
+      <nav>
+        <button data-section="dashboard" class="nav-item active">Dashboard</button>
+        <button data-section="record" class="nav-item">Record / Import</button>
+        <button data-section="autotune" class="nav-item">Auto-Tune Engine</button>
+        <button data-section="keyscale" class="nav-item">Key & Scale</button>
+        <button data-section="editor" class="nav-item">Pitch Editor</button>
+        <button data-section="formant" class="nav-item">Formant & Voice</button>
+        <button data-section="fx" class="nav-item">Vocal FX Rack</button>
+        <button data-section="mixer" class="nav-item">Mixer</button>
+        <button data-section="analyzer" class="nav-item">Analyzer</button>
+        <button data-section="presets" class="nav-item">Presets</button>
+        <button data-section="export" class="nav-item">Export</button>
+        <button data-section="settings" class="nav-item">Settings</button>
+      </nav>
+    </aside>
+    <div id="navScrim" class="nav-scrim"></div>
+
+    <main class="workspace">
+      <section id="dashboard" class="view active-view">
+        <div class="view-title"><h1>Dashboard</h1><p>Project overview, meters, preset, and performance.</p></div>
+        <div class="grid cards-4">
+          <article class="card hero-card"><h2 id="projectName">Untitled Vocal Project</h2><p>Current key/scale: <strong id="dashKeyScale">C Major</strong></p><p>Preset: <strong id="dashPreset">Natural Pop Vocal</strong></p><div class="button-row"><button id="quickRecord" class="primary">Quick Record</button><button id="quickImport" class="secondary">Quick Import</button><input id="quickImportFile" type="file" accept="audio/*" hidden></div></article>
+          <article class="card"><h3>Input Meter</h3><canvas id="inputMeter" class="meter-canvas"></canvas><div class="meter-label" id="inputDb">-∞ dB</div></article>
+          <article class="card"><h3>Output Meter</h3><canvas id="outputMeter" class="meter-canvas"></canvas><div class="meter-label" id="outputDb">-∞ dB</div></article>
+          <article class="card"><h3>Performance</h3><div class="cpu-ring"><span id="cpuValue">0%</span></div><p id="perfHint">Low latency mode ready.</p></article>
+        </div>
+      </section>
+
+      <section id="record" class="view">
+        <div class="view-title"><h1>Record / Import</h1><p>Capture microphone vocals or import audio locally.</p></div>
+        <div class="grid two-col">
+          <article class="card drop-zone" id="dropZone"><h2>Import Audio</h2><p>Drag and drop an audio file here, or choose a file.</p><input id="audioFile" type="file" accept="audio/*"><p id="fileInfo">No file loaded.</p></article>
+          <article class="card"><h2>Recording</h2><div class="button-row"><button id="recordBtn" class="record-button">● Start Recording</button><button id="monitorBtn" class="secondary">Monitoring Off</button></div><label>Input gain <input id="inputGain" type="range" min="0" max="2" value="1" step="0.01"><span data-value-for="inputGain">1.00</span></label><div class="button-row"><button id="metronomeBtn" class="secondary">Metronome Off</button><label>BPM <input id="bpm" type="number" min="40" max="240" value="120"></label></div></article>
+        </div>
+        <article class="card timeline-card"><div class="timeline-toolbar"><button id="playBtn">▶ Play</button><button id="pauseBtn">⏸ Pause</button><button id="stopBtn">■ Stop</button><button id="trimBtn">Trim Selection</button><button id="cutBtn">Cut Selection</button><button id="splitBtn">Split at Cursor</button><span id="timeReadout">0:00.000</span></div><canvas id="waveformCanvas" class="waveform"></canvas><div class="selection-help">Drag on waveform to select. Click to set cursor.</div></article>
+      </section>
+
+      <section id="autotune" class="view">
+        <div class="view-title"><h1>Auto-Tune Engine</h1><p>Low-latency browser pitch tracking and scale correction.</p></div>
+        <div class="grid cards-4">
+          <article class="card display-card"><h3>Detected Note</h3><div id="noteDisplay" class="big-readout">--</div><p><span id="freqDisplay">-- Hz</span> • <span id="centsDisplay">-- cents</span></p><p>Confidence: <span id="confidenceDisplay">0%</span></p></article>
+          <article class="card controls-card"><h3>Correction</h3><label>Retune speed <input id="retuneSpeed" type="range" min="0" max="100" value="35"><span data-value-for="retuneSpeed">35</span></label><label>Correction amount <input id="correctionAmount" type="range" min="0" max="100" value="80"><span data-value-for="correctionAmount">80</span></label><label>Wet / dry mix <input id="wetDry" type="range" min="0" max="100" value="85"><span data-value-for="wetDry">85</span></label></article>
+          <article class="card controls-card"><h3>Feel</h3><label>Humanize <input id="humanize" type="range" min="0" max="100" value="30"><span data-value-for="humanize">30</span></label><label>Flex tune <input id="flexTune" type="range" min="0" max="100" value="20"><span data-value-for="flexTune">20</span></label><label>Transition smoothing <input id="transitionSmoothing" type="range" min="0" max="100" value="55"><span data-value-for="transitionSmoothing">55</span></label></article>
+          <article class="card"><h3>Modes</h3><label class="switch"><input id="snapScale" type="checkbox" checked><span>Snap to scale</span></label><label class="switch"><input id="hardTune" type="checkbox"><span>Hard tune mode</span></label><label class="switch"><input id="naturalTune" type="checkbox" checked><span>Natural tune mode</span></label></article>
+        </div>
+      </section>
+
+      <section id="keyscale" class="view">
+        <div class="view-title"><h1>Key & Scale</h1><p>Define legal notes for automatic correction and manual targeting.</p></div>
+        <div class="grid two-col">
+          <article class="card"><h2>Scale</h2><label>Key <select id="keySelect"></select></label><label>Scale <select id="scaleSelect"></select></label><div id="keyboard" class="keyboard"></div><button id="saveScale" class="primary">Save Custom Scale</button></article>
+          <article class="card"><h2>Allowed Notes</h2><div id="noteToggles" class="note-grid"></div><label>Manual target note <select id="targetNote"></select></label><p id="scaleSummary">C Major notes are enabled.</p></article>
+        </div>
+      </section>
+
+      <section id="editor" class="view">
+        <div class="view-title"><h1>Pitch Editor</h1><p>Melodyne-style note blobs with pitch curve and piano-roll grid.</p></div>
+        <article class="card editor-card"><div class="timeline-toolbar"><button id="detectNotesBtn" class="primary">Detect Notes</button><button id="zoomInBtn">Zoom In</button><button id="zoomOutBtn">Zoom Out</button><button id="undoBtn">Undo</button><button id="redoBtn">Redo</button><button id="splitNoteBtn">Split Note</button><button id="mergeNoteBtn">Merge Notes</button></div><canvas id="pitchEditorCanvas" class="pitch-editor"></canvas><div class="grid two-col compact"><label>Pitch straighten <input id="pitchStraighten" type="range" min="0" max="100" value="30"><span data-value-for="pitchStraighten">30</span></label><label>Vibrato amount <input id="vibratoAmount" type="range" min="0" max="100" value="50"><span data-value-for="vibratoAmount">50</span></label><label>Pitch drift correction <input id="driftCorrection" type="range" min="0" max="100" value="40"><span data-value-for="driftCorrection">40</span></label></div><p class="selection-help">Drag note blobs up/down for pitch and left/right for timing. Select blobs before split or merge.</p></article>
+      </section>
+
+      <section id="formant" class="view">
+        <div class="view-title"><h1>Formant & Voice</h1><p>Tone-preserving voice character controls using browser DSP.</p></div>
+        <div class="grid cards-4"><article class="card"><h3>Preservation</h3><label class="switch"><input id="formantPreserve" type="checkbox" checked><span>Preserve vocal tone</span></label><label>Formant shift <input id="formantShift" type="range" min="-12" max="12" value="0" step="0.1"><span data-value-for="formantShift">0</span></label></article><article class="card"><h3>Body</h3><label>Gender / tone <input id="genderTone" type="range" min="-100" max="100" value="0"><span data-value-for="genderTone">0</span></label><label>Throat length <input id="throatLength" type="range" min="-100" max="100" value="0"><span data-value-for="throatLength">0</span></label></article><article class="card"><h3>Character</h3><label>Voice character <input id="voiceCharacter" type="range" min="0" max="100" value="45"><span data-value-for="voiceCharacter">45</span></label><label>Naturalness <input id="naturalness" type="range" min="0" max="100" value="75"><span data-value-for="naturalness">75</span></label></article><article class="card"><h3>Engine Note</h3><p>Formant shaping uses EQ, harmonic balance, and granular delay cues without cloud or AI processing.</p></article></div>
+      </section>
+
+      <section id="fx" class="view"><div class="view-title"><h1>Vocal FX Rack</h1><p>Professional vocal modules with local Web Audio processing.</p></div><div id="fxRack" class="fx-rack"></div></section>
+
+      <section id="mixer" class="view"><div class="view-title"><h1>Mixer</h1><p>Vocal channel strip, dry/wet balance, pan, sends, and meters.</p></div><div class="grid three-col"><article class="card channel-strip"><h2>Vocal</h2><label>Dry / wet <input id="mixerDryWet" type="range" min="0" max="100" value="85"><span data-value-for="mixerDryWet">85</span></label><label>Volume <input id="mixerVolume" type="range" min="0" max="150" value="100"><span data-value-for="mixerVolume">100</span></label><label>Pan <input id="mixerPan" type="range" min="-100" max="100" value="0"><span data-value-for="mixerPan">0</span></label><label>FX send <input id="mixerSend" type="range" min="0" max="100" value="35"><span data-value-for="mixerSend">35</span></label><label>Output gain <input id="outputGain" type="range" min="0" max="150" value="95"><span data-value-for="outputGain">95</span></label><div class="button-row"><button id="muteBtn">Mute</button><button id="soloBtn">Solo</button></div></article><article class="card"><h2>Stereo Meters</h2><canvas id="stereoMeter" class="meter-tall"></canvas></article><article class="card"><h2>Bus Status</h2><p id="busStatus">Limiter protected. No feedback routes enabled.</p></article></div></section>
+
+      <section id="analyzer" class="view"><div class="view-title"><h1>Analyzer</h1><p>Spectrum, oscilloscope, pitch, loudness, and phase tools.</p></div><div class="grid two-col"><article class="card"><h2>Spectrum Analyzer</h2><canvas id="spectrumCanvas" class="analyzer-canvas"></canvas></article><article class="card"><h2>Oscilloscope</h2><canvas id="scopeCanvas" class="analyzer-canvas"></canvas></article><article class="card"><h2>Pitch Monitor</h2><div id="pitchMonitor" class="big-readout">--</div></article><article class="card"><h2>Loudness</h2><p>RMS: <strong id="rmsMeter">-∞ dB</strong></p><p>Peak: <strong id="peakMeter">-∞ dB</strong></p><p>LUFS approx: <strong id="lufsMeter">-∞ LUFS</strong></p><p>Correlation approx: <strong id="phaseMeter">0.00</strong></p></article></div></section>
+
+      <section id="presets" class="view"><div class="view-title"><h1>Presets</h1><p>Load, save, import, export, and favorite complete vocal chains.</p></div><div class="grid two-col"><article class="card"><h2>Library</h2><div id="presetList" class="preset-list"></div></article><article class="card"><h2>Preset Actions</h2><label>Name <input id="presetName" type="text" value="My Vocal Preset"></label><div class="button-row"><button id="savePreset" class="primary">Save Preset</button><button id="exportPreset">Export Preset JSON</button><button id="exportPresetPack">Export Preset Pack</button></div><label class="import-button">Import Preset JSON <input id="importPreset" type="file" accept="application/json" hidden></label><p id="presetStatus">Ready.</p></article></div></section>
+
+      <section id="export" class="view"><div class="view-title"><h1>Export</h1><p>Render WAV audio and portable project data entirely in browser.</p></div><div class="grid two-col"><article class="card"><h2>Audio Export</h2><div class="button-row"><button id="exportWet" class="primary">Export Processed WAV</button><button id="exportDry">Export Dry WAV</button><button id="exportWetOnly">Export Wet Vocal WAV</button></div><p id="exportStatus">Load or record audio before WAV export.</p></article><article class="card"><h2>Project Data</h2><div class="button-row"><button id="exportProject">Export Project JSON</button><button id="importProjectBtn">Import Project JSON</button><input id="importProject" type="file" accept="application/json" hidden></div><p>Project files include settings, presets, editor notes, and optional embedded source audio.</p></article></div></section>
+
+      <section id="settings" class="view"><div class="view-title"><h1>Settings</h1><p>Latency, buffer, theme, performance, mobile optimization, and shortcuts.</p></div><div class="grid two-col"><article class="card"><h2>Engine</h2><label>Audio latency mode <select id="latencyMode"><option value="interactive">Interactive</option><option value="balanced">Balanced</option><option value="playback">Playback</option></select></label><label>Buffer size mode <select id="bufferMode"><option>Auto</option><option>Small</option><option>Medium</option><option>Large</option></select></label><label class="switch"><input id="performanceMode" type="checkbox"><span>Performance mode</span></label><label class="switch"><input id="mobileMode" type="checkbox"><span>Mobile optimization mode</span></label></article><article class="card"><h2>Appearance & Help</h2><button id="themeToggle">Toggle Theme</button><button id="resetApp" class="danger">Reset App</button><h3>Keyboard Shortcuts</h3><ul><li>Space: Play / pause</li><li>R: Record</li><li>S: Stop</li><li>Cmd/Ctrl+Z: Undo</li><li>Cmd/Ctrl+Shift+Z: Redo</li></ul></article></div></section>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

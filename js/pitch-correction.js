@@ -1,0 +1,5 @@
+import { allowedPitchClasses, nearestAllowedMidi, midiToFrequency, frequencyToMidi } from './pitch-detection.js';
+export class PitchCorrectionEngine{
+  constructor(state){this.state=state;this.smoothed=0}
+  computeRatio(freq){if(!freq)return 1;const midi=frequencyToMidi(freq);const allowed=allowedPitchClasses(this.state.key,this.state.scale,this.state.customScale);let target=this.state.snapScale?nearestAllowedMidi(midi,allowed):Math.round(midi);if(this.state.manualTarget&&this.state.manualTarget!=='Auto'){const pc=this.state.noteNames.indexOf(this.state.manualTarget);target=nearestAllowedMidi(midi,[pc])}const cents=(target-midi)*100;const flex=this.state.flexTune/100;const human=this.state.humanize/100;const amount=this.state.correctionAmount/100;const hard=this.state.hardTune?1:0;const natural=this.state.naturalTune?0.75:1;const deadZone=flex*38;const active=Math.max(0,Math.abs(cents)-deadZone)*Math.sign(cents);const desired=active/100*amount*natural*(1-human*.35);const speed=this.state.hardTune?1:Math.max(.03,this.state.retuneSpeed/120);this.smoothed += (desired-this.smoothed)*speed;return midiToFrequency(midi+this.smoothed)/freq}
+}
