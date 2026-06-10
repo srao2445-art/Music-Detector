@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#06111f" />
+    <title>VolumeFlow Fast — Local MP3 Volume Matching</title>
+    <link rel="preconnect" href="https://unpkg.com" crossorigin />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+    <div class="shell">
+      <header class="topbar">
+        <a class="brand" href="#top" aria-label="VolumeFlow Fast home">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span>Volume<span>Flow</span> Fast</span>
+        </a>
+        <div class="security-pill">
+          <span aria-hidden="true">◈</span>
+          <strong>Private &amp; local</strong>
+        </div>
+      </header>
+
+      <main id="top">
+        <section class="hero glass-panel">
+          <div class="hero-copy">
+            <p class="eyebrow">Studio-grade audio automation</p>
+            <h1>Match MP3 volume. <span>Keep it smooth.</span></h1>
+            <p class="lede">
+              Upload short or long MP3 audio, select a reference section, or let FFmpeg balance it automatically — entirely inside your browser.
+            </p>
+            <div class="tag-row" aria-label="Key product features">
+              <span>Browser-only processing</span>
+              <span>FFmpeg WASM worker</span>
+              <span>No backend storage</span>
+            </div>
+          </div>
+          <aside class="status-card" aria-live="polite">
+            <span class="status-dot"></span>
+            <p id="runtimeMode">Detecting runtime mode…</p>
+            <small>Large MP3 files may take time. Processing is fully local on your device.</small>
+          </aside>
+        </section>
+
+        <section class="workspace">
+          <div class="upload-card glass-panel" id="dropZone">
+            <input id="fileInput" type="file" accept=".mp3,audio/mpeg" />
+            <div class="upload-icon" aria-hidden="true">↥</div>
+            <h2>Drop an MP3 here</h2>
+            <p>or choose a file from your device. WAV, M4A, AAC, FLAC, OGG, and non-MP3 files are rejected.</p>
+            <button class="primary-button" type="button" id="chooseFileButton">Choose MP3</button>
+          </div>
+
+          <div class="control-stack">
+            <section class="glass-panel file-panel" aria-labelledby="fileTitle">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">Input</p>
+                  <h2 id="fileTitle">File details</h2>
+                </div>
+                <button class="ghost-button" type="button" id="resetButton" disabled>Reset</button>
+              </div>
+              <dl class="file-meta">
+                <div><dt>Name</dt><dd id="fileName">No MP3 selected</dd></div>
+                <div><dt>Size</dt><dd id="fileSize">—</dd></div>
+                <div><dt>Duration</dt><dd id="fileDuration">—</dd></div>
+              </dl>
+              <audio id="audioPreview" controls preload="metadata"></audio>
+            </section>
+
+            <section class="glass-panel waveform-panel" aria-labelledby="waveformTitle">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">Preview</p>
+                  <h2 id="waveformTitle">Lightweight waveform</h2>
+                </div>
+                <span id="selectionLabel">00:00 → 00:00</span>
+              </div>
+              <div class="waveform-wrap">
+                <canvas id="waveformCanvas" width="1200" height="260" aria-label="Waveform selection area"></canvas>
+                <div class="handle start-handle" id="startHandle" role="slider" tabindex="0" aria-label="Selection start" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"></div>
+                <div class="handle end-handle" id="endHandle" role="slider" tabindex="0" aria-label="Selection end" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"></div>
+              </div>
+              <div class="time-grid">
+                <label>Start time <input id="startTime" type="number" min="0" step="0.01" value="0" /></label>
+                <label>End time <input id="endTime" type="number" min="0" step="0.01" value="0" /></label>
+              </div>
+            </section>
+
+            <section class="glass-panel mode-panel" aria-labelledby="modeTitle">
+              <p class="eyebrow">Workflow</p>
+              <h2 id="modeTitle">Choose processing mode</h2>
+              <div class="mode-grid">
+                <label class="mode-card selected" id="matchCard">
+                  <input type="radio" name="mode" value="match" checked />
+                  <strong>Match to selected section</strong>
+                  <span>Analyze a reference section and apply the measured gain to the full MP3.</span>
+                </label>
+                <label class="mode-card" id="autoCard">
+                  <input type="radio" name="mode" value="auto" />
+                  <strong>Automatic leveling</strong>
+                  <span>Use FFmpeg dynaudnorm or loudnorm to balance the full MP3.</span>
+                </label>
+              </div>
+              <label class="filter-select" id="autoFilterWrap">
+                Automatic filter
+                <select id="autoFilter">
+                  <option value="dynaudnorm">Dynamic normalization (dynaudnorm)</option>
+                  <option value="loudnorm">Broadcast loudness (loudnorm -16 LUFS)</option>
+                </select>
+              </label>
+            </section>
+
+            <section class="glass-panel process-panel" aria-labelledby="processTitle">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">Render</p>
+                  <h2 id="processTitle">Export MP3 only</h2>
+                </div>
+                <span id="gainReadout">Gain: —</span>
+              </div>
+              <div class="progress-shell" aria-label="Processing progress">
+                <div class="progress-bar" id="progressBar"></div>
+              </div>
+              <p class="status-text" id="statusText">Select an MP3 to begin.</p>
+              <p class="error-text" id="errorText" role="alert"></p>
+              <div class="action-row">
+                <button class="primary-button" type="button" id="processButton" disabled>Process MP3</button>
+                <button class="ghost-button" type="button" id="cancelButton" disabled>Cancel</button>
+                <a class="download-button disabled" id="downloadButton" download="volumeflow-fast-output.mp3">Download MP3</a>
+              </div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
