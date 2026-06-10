@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebViewForge — Static Website to Android WebView App</title>
+    <meta
+      name="description"
+      content="Convert static HTML, CSS and JavaScript websites into complete Android Studio WebView app projects locally in your browser."
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+              mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+            },
+            colors: {
+              forge: {
+                ink: '#030712',
+                panel: 'rgba(9, 16, 31, 0.72)',
+                blue: '#2f7dff',
+                cyan: '#22d3ee',
+                violet: '#8b5cf6',
+              },
+            },
+            boxShadow: {
+              premium: '0 24px 80px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255,255,255,0.08)',
+              glow: '0 0 60px rgba(34, 211, 238, 0.28)',
+            },
+            animation: {
+              float: 'float 7s ease-in-out infinite',
+              pulseGlow: 'pulseGlow 3s ease-in-out infinite',
+              slide: 'slide 22s linear infinite',
+              shimmer: 'shimmer 2.4s linear infinite',
+              orbit: 'orbit 16s linear infinite',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-18px)' },
+              },
+              pulseGlow: {
+                '0%, 100%': { opacity: '.55', filter: 'blur(0px)' },
+                '50%': { opacity: '1', filter: 'blur(1px)' },
+              },
+              slide: {
+                '0%': { transform: 'translateX(-50%)' },
+                '100%': { transform: 'translateX(0%)' },
+              },
+              shimmer: {
+                '0%': { backgroundPosition: '200% 0' },
+                '100%': { backgroundPosition: '-200% 0' },
+              },
+              orbit: {
+                '0%': { transform: 'rotate(0deg) translateX(16px) rotate(0deg)' },
+                '100%': { transform: 'rotate(360deg) translateX(16px) rotate(-360deg)' },
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="min-h-screen overflow-x-hidden bg-forge-ink font-sans text-white antialiased selection:bg-cyan-300/25">
+    <div id="cursorGlow" class="pointer-events-none fixed left-0 top-0 z-50 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300/10 blur-3xl transition-opacity duration-300"></div>
+    <div class="fixed inset-0 -z-20 bg-[radial-gradient(circle_at_top_left,rgba(47,125,255,0.22),transparent_34%),radial-gradient(circle_at_70%_0%,rgba(34,211,238,0.16),transparent_28%),linear-gradient(180deg,#030712_0%,#050816_46%,#020617_100%)]"></div>
+    <div class="fixed inset-0 -z-10 opacity-40 [background-image:linear-gradient(rgba(255,255,255,.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.035)_1px,transparent_1px)] [background-size:72px_72px]"></div>
+    <div id="particles" class="pointer-events-none fixed inset-0 -z-10"></div>
+    <div class="pointer-events-none fixed -left-28 top-20 -z-10 h-80 w-80 rounded-full bg-blue-500/20 blur-3xl animate-float"></div>
+    <div class="pointer-events-none fixed right-0 top-1/3 -z-10 h-96 w-96 rounded-full bg-cyan-400/10 blur-3xl animate-float [animation-delay:1.4s]"></div>
+
+    <header class="sticky top-0 z-40 border-b border-white/10 bg-slate-950/55 backdrop-blur-2xl">
+      <nav class="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
+        <a href="#top" class="group flex items-center gap-3" aria-label="WebViewForge home">
+          <span class="relative grid h-10 w-10 place-items-center overflow-hidden rounded-2xl border border-cyan-300/30 bg-white/10 shadow-glow">
+            <span class="absolute inset-0 bg-[conic-gradient(from_120deg,transparent,#22d3ee,#2f7dff,transparent)] opacity-70 animate-orbit"></span>
+            <span class="relative grid h-8 w-8 place-items-center rounded-xl bg-slate-950 font-black text-cyan-200">W</span>
+          </span>
+          <span class="text-lg font-bold tracking-tight">WebView<span class="text-cyan-300">Forge</span></span>
+        </a>
+        <div class="hidden items-center gap-8 text-sm font-medium text-slate-300 md:flex">
+          <a class="transition hover:text-white" href="#features">Features</a>
+          <a class="transition hover:text-white" href="#builder">Builder</a>
+          <a class="transition hover:text-white" href="#output">Output</a>
+        </div>
+        <a href="#builder" class="rounded-full border border-white/10 bg-white/10 px-5 py-2 text-sm font-semibold shadow-premium transition hover:border-cyan-300/50 hover:bg-cyan-300/10">Launch Builder</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="relative mx-auto max-w-7xl px-5 pb-20 pt-20 lg:px-8 lg:pb-28 lg:pt-28">
+        <div class="mx-auto max-w-3xl text-center">
+          <div class="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-sm font-semibold text-cyan-100 shadow-glow">
+            <span class="h-2 w-2 rounded-full bg-cyan-300 animate-pulse"></span>
+            AI-inspired Android project generator — no backend required
+          </div>
+          <h1 class="text-balance bg-gradient-to-b from-white via-slate-100 to-slate-400 bg-clip-text text-5xl font-black tracking-[-0.055em] text-transparent sm:text-6xl lg:text-7xl">
+            Convert Any Static Website Into An Android App
+          </h1>
+          <p class="mx-auto mt-6 max-w-2xl text-balance text-lg leading-8 text-slate-300 sm:text-xl">
+            Upload your website files and instantly generate a ready-to-build Android WebView project.
+          </p>
+          <div class="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <a href="#builder" class="group relative overflow-hidden rounded-full bg-white px-7 py-3.5 text-sm font-bold text-slate-950 shadow-[0_0_40px_rgba(34,211,238,.28)] transition hover:scale-[1.02]">
+              <span class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyan-200/50 to-transparent transition duration-700 group-hover:translate-x-full"></span>
+              <span class="relative">Start Building</span>
+            </a>
+            <a href="#demo" class="rounded-full border border-white/15 bg-white/10 px-7 py-3.5 text-sm font-bold text-white backdrop-blur transition hover:border-cyan-300/50 hover:bg-white/15">View Demo</a>
+          </div>
+        </div>
+
+        <div id="demo" class="relative mx-auto mt-16 max-w-5xl">
+          <div class="absolute -inset-8 rounded-[3rem] bg-gradient-to-r from-blue-500/15 via-cyan-400/15 to-violet-500/15 blur-3xl"></div>
+          <div class="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.06] p-6 shadow-premium backdrop-blur-2xl lg:p-10">
+            <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent"></div>
+            <div class="grid items-center gap-8 lg:grid-cols-[1fr_auto_1fr]">
+              <div class="transform-card rounded-3xl border border-white/10 bg-slate-950/70 p-5">
+                <div class="mb-4 flex items-center gap-2">
+                  <span class="h-3 w-3 rounded-full bg-red-400"></span>
+                  <span class="h-3 w-3 rounded-full bg-yellow-300"></span>
+                  <span class="h-3 w-3 rounded-full bg-emerald-300"></span>
+                </div>
+                <div class="mb-5 flex items-center gap-3">
+                  <div class="grid h-12 w-12 place-items-center rounded-2xl bg-blue-500/15 text-2xl">📁</div>
+                  <div>
+                    <p class="font-bold">Website Folder</p>
+                    <p class="text-sm text-slate-400">index.html · css · js · assets</p>
+                  </div>
+                </div>
+                <div class="space-y-2 font-mono text-xs text-slate-300">
+                  <div class="rounded-xl bg-white/5 p-3">/site/index.html</div>
+                  <div class="rounded-xl bg-white/5 p-3">/site/styles/app.css</div>
+                  <div class="rounded-xl bg-white/5 p-3">/site/scripts/main.js</div>
+                </div>
+              </div>
+              <div class="relative mx-auto flex h-28 w-28 items-center justify-center lg:h-40 lg:w-40">
+                <div class="absolute h-full w-full rounded-full border border-cyan-300/20 animate-pulseGlow"></div>
+                <div class="absolute h-2 w-40 rounded-full bg-gradient-to-r from-blue-500 via-cyan-300 to-blue-500 shadow-glow lg:w-52"></div>
+                <div class="absolute h-2 w-40 rounded-full bg-gradient-to-r from-blue-500 via-cyan-300 to-blue-500 shadow-glow rotate-90 lg:hidden"></div>
+                <div class="relative grid h-16 w-16 place-items-center rounded-3xl border border-cyan-300/30 bg-cyan-300/10 text-3xl shadow-glow">⚡</div>
+              </div>
+              <div class="phone-shell mx-auto">
+                <div class="phone-screen">
+                  <div class="mx-auto mb-4 h-1.5 w-16 rounded-full bg-white/20"></div>
+                  <div class="rounded-3xl bg-gradient-to-br from-blue-500/30 to-cyan-300/20 p-4">
+                    <div class="mb-3 h-20 rounded-2xl bg-white/10"></div>
+                    <div class="space-y-2">
+                      <div class="h-3 rounded-full bg-white/40"></div>
+                      <div class="h-3 w-4/5 rounded-full bg-white/20"></div>
+                      <div class="h-9 rounded-2xl bg-cyan-300/30"></div>
+                    </div>
+                  </div>
+                  <p class="mt-5 text-center text-sm font-semibold text-cyan-100">Android WebView App</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="features" class="mx-auto max-w-7xl px-5 py-20 lg:px-8">
+        <div class="mx-auto max-w-2xl text-center">
+          <p class="text-sm font-bold uppercase tracking-[0.28em] text-cyan-300">Premium builder stack</p>
+          <h2 class="mt-4 text-4xl font-black tracking-tight sm:text-5xl">Everything needed to ship a WebView app.</h2>
+        </div>
+        <div class="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <article class="feature-card"><span>🗂️</span><h3>Local Website Support</h3><p>Convert HTML, CSS, JS websites into Android apps.</p></article>
+          <article class="feature-card"><span>🔒</span><h3>No Backend Required</h3><p>Everything runs locally inside the browser.</p></article>
+          <article class="feature-card"><span>🤖</span><h3>Android Studio Ready</h3><p>Generate complete Android Studio projects.</p></article>
+          <article class="feature-card"><span>✨</span><h3>Splash Screen Generator</h3><p>Upload logo and customize launch screen.</p></article>
+          <article class="feature-card"><span>📡</span><h3>Offline Support</h3><p>Website files bundled inside APK assets.</p></article>
+          <article class="feature-card"><span>🧬</span><h3>Package Customization</h3><p>Customize package name, version and app title.</p></article>
+        </div>
+      </section>
+
+      <section id="builder" class="mx-auto max-w-7xl px-5 py-20 lg:px-8">
+        <div class="mb-8 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+          <div>
+            <p class="text-sm font-bold uppercase tracking-[0.28em] text-cyan-300">Forge dashboard</p>
+            <h2 class="mt-4 text-4xl font-black tracking-tight sm:text-5xl">Build your Android project.</h2>
+          </div>
+          <button id="generateBtn" class="group rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-300 px-6 py-4 text-sm font-black text-slate-950 shadow-glow transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50">
+            Generate Android Project
+          </button>
+        </div>
+
+        <div class="grid gap-5 xl:grid-cols-[1.05fr_1.1fr_.95fr]">
+          <aside class="glass-panel p-5">
+            <div class="mb-5 flex items-center justify-between">
+              <h3 class="text-xl font-bold">Website Upload</h3>
+              <span class="rounded-full bg-cyan-300/10 px-3 py-1 text-xs font-bold text-cyan-200">ZIP</span>
+            </div>
+            <label id="dropZone" class="group flex cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-white/20 bg-white/[0.04] px-6 py-10 text-center transition hover:border-cyan-300/60 hover:bg-cyan-300/5">
+              <input id="zipInput" type="file" accept=".zip,application/zip" class="hidden" />
+              <span class="mb-4 grid h-16 w-16 place-items-center rounded-3xl bg-blue-500/15 text-3xl shadow-glow transition group-hover:scale-105">⬆️</span>
+              <span class="font-bold">Drop your static website ZIP</span>
+              <span class="mt-2 text-sm text-slate-400">or click to upload HTML, CSS and JS assets</span>
+            </label>
+            <div class="mt-5 h-2 overflow-hidden rounded-full bg-white/10">
+              <div id="uploadProgress" class="h-full w-0 rounded-full bg-gradient-to-r from-blue-500 to-cyan-300 transition-all duration-700"></div>
+            </div>
+            <div class="mt-5 grid grid-cols-2 gap-3">
+              <div class="metric"><span>Total files</span><strong id="fileCount">0</strong></div>
+              <div class="metric"><span>Total size</span><strong id="totalSize">0 KB</strong></div>
+              <div class="metric col-span-2"><span>Main entry file</span><strong id="entryFile">Waiting for index.html</strong></div>
+            </div>
+            <div id="fileList" class="mt-5 max-h-52 space-y-2 overflow-auto pr-1 text-sm text-slate-300">
+              <div class="empty-state">Upload a ZIP to inspect bundled files.</div>
+            </div>
+          </aside>
+
+          <section class="glass-panel p-5">
+            <h3 class="mb-5 text-xl font-bold">Android Settings</h3>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="field"><span>App Name</span><input id="appName" value="Forge App" /></label>
+              <label class="field"><span>Package Name</span><input id="packageName" value="com.webviewforge.app" /></label>
+              <label class="field"><span>Version Name</span><input id="versionName" value="1.0.0" /></label>
+              <label class="field"><span>Version Code</span><input id="versionCode" type="number" min="1" value="1" /></label>
+            </div>
+            <div class="mt-6 grid gap-3 sm:grid-cols-2">
+              <label class="switch-row"><span>Enable JavaScript</span><input data-setting="enableJs" type="checkbox" checked /></label>
+              <label class="switch-row"><span>Enable Pull To Refresh</span><input data-setting="pullRefresh" type="checkbox" checked /></label>
+              <label class="switch-row"><span>Enable File Upload</span><input data-setting="fileUpload" type="checkbox" checked /></label>
+              <label class="switch-row"><span>Enable Zoom</span><input data-setting="zoom" type="checkbox" /></label>
+              <label class="switch-row"><span>Enable Fullscreen</span><input data-setting="fullscreen" type="checkbox" checked /></label>
+              <label class="switch-row"><span>Enable Offline Mode</span><input data-setting="offline" type="checkbox" checked /></label>
+            </div>
+            <div class="mt-6 rounded-3xl border border-white/10 bg-slate-950/55 p-4">
+              <div class="mb-3 flex items-center justify-between text-sm">
+                <span class="font-bold text-slate-200">Build Process</span>
+                <span id="buildPercent" class="font-mono text-cyan-200">0%</span>
+              </div>
+              <div class="h-2 overflow-hidden rounded-full bg-white/10"><div id="buildBar" class="h-full w-0 rounded-full bg-[linear-gradient(90deg,#2f7dff,#22d3ee,#8b5cf6,#2f7dff)] bg-[length:200%_100%] transition-all duration-500 animate-shimmer"></div></div>
+              <ol id="buildSteps" class="mt-4 space-y-2 text-sm text-slate-400">
+                <li data-step="0">Analyzing Website</li>
+                <li data-step="1">Creating Assets Folder</li>
+                <li data-step="2">Generating WebView Activity</li>
+                <li data-step="3">Generating Android Manifest</li>
+                <li data-step="4">Creating Gradle Files</li>
+                <li data-step="5">Packaging Project</li>
+              </ol>
+            </div>
+          </section>
+
+          <aside class="glass-panel p-5">
+            <h3 class="mb-5 text-xl font-bold">Branding</h3>
+            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
+              <label class="upload-mini"><input id="iconInput" type="file" accept="image/*" class="hidden" /><span>App Icon</span><strong id="iconName">Upload image</strong></label>
+              <label class="upload-mini"><input id="splashInput" type="file" accept="image/*" class="hidden" /><span>Splash Logo</span><strong id="splashName">Upload image</strong></label>
+              <label class="field"><span>Splash Background Color</span><input id="splashColor" type="color" value="#030712" /></label>
+              <label class="field"><span>Theme Color</span><input id="themeColor" type="color" value="#22d3ee" /></label>
+            </div>
+
+            <div class="mt-7 flex justify-center">
+              <div class="phone-shell scale-95">
+                <div id="previewScreen" class="phone-screen transition-colors duration-500">
+                  <div class="mx-auto mb-4 h-1.5 w-16 rounded-full bg-white/20"></div>
+                  <div class="flex h-[370px] flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950">
+                    <div id="previewTop" class="h-12 shrink-0 bg-cyan-400/20 px-4 py-3 text-xs font-bold text-white">Forge App</div>
+                    <div id="previewBody" class="grid flex-1 place-items-center p-6 text-center">
+                      <div>
+                        <div id="previewLogo" class="mx-auto mb-5 grid h-20 w-20 place-items-center rounded-[1.7rem] bg-cyan-300/20 text-3xl shadow-glow">W</div>
+                        <p id="previewTitle" class="text-lg font-black">Forge App</p>
+                        <p class="mt-2 text-xs text-slate-400">file:///android_asset/index.html</p>
+                      </div>
+                    </div>
+                    <div class="grid h-12 place-items-center border-t border-white/10 text-[10px] text-slate-500">Live Android Phone Preview</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="output" class="mx-auto max-w-7xl px-5 py-20 lg:px-8">
+        <div class="glass-panel overflow-hidden p-0">
+          <div class="grid gap-0 lg:grid-cols-[.9fr_1.1fr]">
+            <div class="border-b border-white/10 p-8 lg:border-b-0 lg:border-r">
+              <p class="text-sm font-bold uppercase tracking-[0.28em] text-cyan-300">Downloadable output</p>
+              <h2 class="mt-4 text-4xl font-black tracking-tight">A complete Android Studio project ZIP.</h2>
+              <p class="mt-4 leading-7 text-slate-300">WebViewForge packages your static site inside <code class="code-pill">app/src/main/assets/</code> and configures WebView to load <code class="code-pill">file:///android_asset/index.html</code>.</p>
+            </div>
+            <div class="bg-slate-950/70 p-8 font-mono text-sm text-slate-300">
+              <pre class="leading-7"><span class="text-cyan-300">WebViewForgeProject.zip</span>
+├── settings.gradle
+├── build.gradle
+├── gradle.properties
+├── README.md
+└── app/
+    ├── build.gradle
+    └── src/main/
+        ├── AndroidManifest.xml
+        ├── java/.../MainActivity.java
+        ├── res/layout/activity_main.xml
+        └── assets/index.html</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast" class="pointer-events-none fixed bottom-6 right-6 z-50 translate-y-6 rounded-2xl border border-white/10 bg-slate-950/90 px-5 py-4 text-sm font-semibold text-white opacity-0 shadow-premium backdrop-blur-xl transition-all duration-300"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
