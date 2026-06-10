@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="VolumeFlow automates audio volume in your browser with reference matching and automatic leveling." />
+  <title>VolumeFlow | Browser Audio Volume Automation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="VolumeFlow home">
+      <span class="brand-mark" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+      </span>
+      <span>Volume<span>Flow</span></span>
+    </a>
+    <div class="secure-badge" aria-label="Private and secure">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.9 8.8 7 10 4.1-1.2 7-5.4 7-10V6l-7-3Zm3.5 7.2-4.2 4.2-2.1-2.1 1.2-1.2.9.9 3-3 1.2 1.2Z"/></svg>
+      Private &amp; secure
+    </div>
+  </header>
+
+  <main id="top" class="page-shell">
+    <section class="hero" aria-labelledby="hero-title">
+      <p class="eyebrow"><span></span> Studio-grade audio automation</p>
+      <h1 id="hero-title">Automate audio volume. <span>Keep it smooth.</span></h1>
+      <p class="hero-copy">Upload your audio, select a reference part or let the browser balance it automatically.</p>
+      <div class="privacy-strip" aria-label="Privacy notices">
+        <span>Browser-only processing</span>
+        <span>Files are erased when you leave</span>
+        <span>No backend storage</span>
+      </div>
+    </section>
+
+    <nav class="steps" aria-label="VolumeFlow workflow steps">
+      <div class="step is-active" data-step="upload"><span>1</span> Upload</div>
+      <div class="step" data-step="mode"><span>2</span> Mode</div>
+      <div class="step" data-step="process"><span>3</span> Process</div>
+    </nav>
+
+    <section class="glass-card upload-card" aria-labelledby="upload-title">
+      <div class="section-heading">
+        <p>Step 1</p>
+        <h2 id="upload-title">Upload audio</h2>
+      </div>
+      <label id="dropZone" class="drop-zone" for="fileInput">
+        <input id="fileInput" type="file" accept="audio/mpeg,audio/wav,audio/x-wav,audio/flac,audio/mp4,audio/aac,audio/ogg,audio/opus,.mp3,.wav,.flac,.m4a,.aac,.ogg,.opus" />
+        <span class="upload-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 3 7.5 7.5l1.4 1.4L11 6.8V16h2V6.8l2.1 2.1 1.4-1.4L12 3Zm-7 9v7c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-7h-2v7H7v-7H5Z"/></svg>
+        </span>
+        <strong>Drop your audio file here</strong>
+        <small>or click to browse from your device</small>
+        <em>Supports MP3, WAV, FLAC, M4A, AAC, OGG, OPUS</em>
+      </label>
+      <div id="fileMeta" class="file-meta" hidden></div>
+      <div class="trust-row">
+        <span><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.6 2.9 8.8 7 10 4.1-1.2 7-5.4 7-10V6l-7-3Z"/></svg> Browser-only processing</span>
+        <span><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm1 5v5.2l4 2.4-1 1.7-5-3V7h2Z"/></svg> Files erased when you leave</span>
+      </div>
+    </section>
+
+    <section id="modeSection" class="glass-card mode-card is-disabled" aria-labelledby="mode-title">
+      <div class="section-heading">
+        <p>Step 2</p>
+        <h2 id="mode-title">Choose volume automation mode</h2>
+      </div>
+      <div class="mode-grid" role="radiogroup" aria-label="Processing mode">
+        <button class="mode-option is-selected" type="button" data-mode="reference" role="radio" aria-checked="true">
+          <span class="mode-icon">⌁</span>
+          <strong>Match Selected Part</strong>
+          <small>Select the cleanest part of your track and use its loudness as the reference for the full file.</small>
+        </button>
+        <button class="mode-option" type="button" data-mode="automatic" role="radio" aria-checked="false">
+          <span class="mode-icon">↯</span>
+          <strong>Automatic Leveling</strong>
+          <small>Analyze the whole track and smooth sections toward a safe target without harsh clipping.</small>
+        </button>
+      </div>
+    </section>
+
+    <section id="referencePanel" class="glass-card process-panel is-disabled" aria-labelledby="reference-title">
+      <div class="section-heading">
+        <p>Step 3</p>
+        <h2 id="reference-title">Select reference part</h2>
+      </div>
+      <div class="waveform-shell">
+        <canvas id="waveformCanvas" width="1200" height="260" aria-label="Audio waveform timeline"></canvas>
+        <div class="selection-readout">
+          <span>Start <strong id="selectionStart">0:00.0</strong></span>
+          <span>End <strong id="selectionEnd">0:00.0</strong></span>
+          <span>Selected <strong id="selectionDuration">0.0s</strong></span>
+        </div>
+      </div>
+      <p class="hint">Drag inside the waveform to create a region, or drag either glowing edge to refine the reference selection.</p>
+      <button id="referenceProcessBtn" class="primary-btn" type="button" disabled>Use this part as reference</button>
+    </section>
+
+    <section id="automaticPanel" class="glass-card process-panel is-disabled" aria-labelledby="automatic-title" hidden>
+      <div class="section-heading">
+        <p>Step 3</p>
+        <h2 id="automatic-title">Automatic leveling settings</h2>
+      </div>
+      <div class="settings-grid">
+        <label>
+          <span>Target loudness</span>
+          <select id="targetLoudness">
+            <option value="0.18">Balanced (-15 dB RMS)</option>
+            <option value="0.13">Podcast safe (-18 dB RMS)</option>
+            <option value="0.23">Louder music (-13 dB RMS)</option>
+          </select>
+        </label>
+        <label>
+          <span>Smoothness</span>
+          <input id="smoothness" type="range" min="0.15" max="0.9" step="0.05" value="0.55" />
+        </label>
+        <label class="check-row">
+          <input id="peakProtection" type="checkbox" checked />
+          <span>Peak protection limiter</span>
+        </label>
+      </div>
+      <button id="autoProcessBtn" class="primary-btn" type="button" disabled>Auto Level Audio</button>
+    </section>
+
+    <section id="progressSection" class="glass-card progress-card" aria-live="polite" hidden>
+      <div class="section-heading">
+        <p>Rendering</p>
+        <h2>Processing state</h2>
+      </div>
+      <div class="progress-track"><span id="progressBar"></span></div>
+      <p id="statusText">Waiting for audio…</p>
+    </section>
+
+    <section id="resultSection" class="glass-card result-card" hidden>
+      <div class="section-heading">
+        <p>Ready</p>
+        <h2>Download processed WAV</h2>
+      </div>
+      <audio id="previewPlayer" controls></audio>
+      <div class="result-actions">
+        <a id="downloadBtn" class="primary-btn" download="volumeflow-processed.wav">Download WAV</a>
+        <button id="resetBtn" class="secondary-btn" type="button">Reset</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
