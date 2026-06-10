@@ -60,6 +60,7 @@
         <em>Supports MP3, WAV, FLAC, M4A, AAC, OGG, OPUS</em>
       </label>
       <div id="fileMeta" class="file-meta" hidden></div>
+      <ul id="fileWarnings" class="file-warnings" hidden></ul>
       <div class="trust-row">
         <span><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.6 2.9 8.8 7 10 4.1-1.2 7-5.4 7-10V6l-7-3Z"/></svg> Browser-only processing</span>
         <span><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm1 5v5.2l4 2.4-1 1.7-5-3V7h2Z"/></svg> Files erased when you leave</span>
@@ -98,7 +99,7 @@
           <span>Selected <strong id="selectionDuration">0.0s</strong></span>
         </div>
       </div>
-      <p class="hint">Drag inside the waveform to create a region, or drag either glowing edge to refine the reference selection.</p>
+      <p class="hint">Drag inside the waveform to create a region, or drag either glowing edge to refine the reference selection. Large files use a lightweight chunk-sampled preview while FFmpeg analyzes the exact selected time range in a worker.</p>
       <button id="referenceProcessBtn" class="primary-btn" type="button" disabled>Use this part as reference</button>
     </section>
 
@@ -111,14 +112,17 @@
         <label>
           <span>Target loudness</span>
           <select id="targetLoudness">
-            <option value="0.18">Balanced (-15 dB RMS)</option>
-            <option value="0.13">Podcast safe (-18 dB RMS)</option>
-            <option value="0.23">Louder music (-13 dB RMS)</option>
+            <option value="-16">Balanced (-16 LUFS)</option>
+            <option value="-18">Podcast safe (-18 LUFS)</option>
+            <option value="-14">Louder music (-14 LUFS)</option>
           </select>
         </label>
         <label>
-          <span>Smoothness</span>
-          <input id="smoothness" type="range" min="0.15" max="0.9" step="0.05" value="0.55" />
+          <span>FFmpeg filter</span>
+          <select id="ffmpegFilter">
+            <option value="loudnorm">Loudnorm normalization</option>
+            <option value="dynaudnorm">Dynamic audio normalizer</option>
+          </select>
         </label>
         <label class="check-row">
           <input id="peakProtection" type="checkbox" checked />
@@ -126,6 +130,20 @@
         </label>
       </div>
       <button id="autoProcessBtn" class="primary-btn" type="button" disabled>Auto Level Audio</button>
+    </section>
+
+    <section class="glass-card export-card" aria-labelledby="export-title">
+      <div class="section-heading compact-heading">
+        <p>Export</p>
+        <h2 id="export-title">Download format</h2>
+      </div>
+      <label class="export-format">
+        <span>Output</span>
+        <select id="outputFormat">
+          <option value="wav">WAV (most reliable)</option>
+          <option value="mp3">MP3 (if supported by FFmpeg build)</option>
+        </select>
+      </label>
     </section>
 
     <section id="progressSection" class="glass-card progress-card" aria-live="polite" hidden>
@@ -140,7 +158,7 @@
     <section id="resultSection" class="glass-card result-card" hidden>
       <div class="section-heading">
         <p>Ready</p>
-        <h2>Download processed WAV</h2>
+        <h2>Download processed audio</h2>
       </div>
       <audio id="previewPlayer" controls></audio>
       <div class="result-actions">

@@ -1,6 +1,12 @@
+const SMALL_PREVIEW_LIMIT = 24 * 1024 * 1024;
+const MOBILE_PREVIEW_LIMIT = 12 * 1024 * 1024;
+const LARGE_FILE_WARNING = 90 * 1024 * 1024;
+const LONG_DURATION_WARNING = 30 * 60;
+
 const fileInput = document.querySelector('#fileInput');
 const dropZone = document.querySelector('#dropZone');
 const fileMeta = document.querySelector('#fileMeta');
+const fileWarnings = document.querySelector('#fileWarnings');
 const modeSection = document.querySelector('#modeSection');
 const referencePanel = document.querySelector('#referencePanel');
 const automaticPanel = document.querySelector('#automaticPanel');
@@ -13,8 +19,9 @@ const selectionDurationEl = document.querySelector('#selectionDuration');
 const referenceProcessBtn = document.querySelector('#referenceProcessBtn');
 const autoProcessBtn = document.querySelector('#autoProcessBtn');
 const targetLoudness = document.querySelector('#targetLoudness');
-const smoothness = document.querySelector('#smoothness');
+const ffmpegFilter = document.querySelector('#ffmpegFilter');
 const peakProtection = document.querySelector('#peakProtection');
+const outputFormat = document.querySelector('#outputFormat');
 const progressSection = document.querySelector('#progressSection');
 const progressBar = document.querySelector('#progressBar');
 const statusText = document.querySelector('#statusText');
@@ -27,21 +34,25 @@ const steps = document.querySelectorAll('.step');
 const state = {
   audioContext: null,
   sourceBuffer: null,
+  duration: 0,
   file: null,
   mode: 'reference',
   selection: { start: 0, end: 0 },
   waveform: [],
+  waveformMode: 'none',
   dragMode: null,
   activeObjectUrl: null,
+  worker: null,
+  processing: false,
 };
 
-const PROCESS_MESSAGES = [
-  'Decoding audio',
-  'Analyzing loudness',
-  'Applying gain automation',
-  'Rendering final audio',
-  'Ready to download',
-];
+function isMobileBrowser() {
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+}
+
+function getPreviewLimit() {
+  return isMobileBrowser() ? MOBILE_PREVIEW_LIMIT : SMALL_PREVIEW_LIMIT;
+}
 
 function getAudioContext() {
   if (!state.audioContext) {
@@ -54,10 +65,10 @@ function setStep(activeStep) {
   steps.forEach((step) => step.classList.toggle('is-active', step.dataset.step === activeStep));
 }
 
-function setStatus(index, progress) {
+function setStatus(message, progress = 0) {
   progressSection.hidden = false;
-  statusText.textContent = PROCESS_MESSAGES[index];
-  progressBar.style.width = `${progress}%`;
+  statusText.textContent = message;
+  progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
 }
 
 function formatTime(seconds) {
@@ -74,34 +85,81 @@ function formatBytes(bytes) {
   return `${(bytes / 1024 ** exponent).toFixed(exponent ? 1 : 0)} ${units[exponent]}`;
 }
 
+function getExtension(file) {
+  return (file.name.match(/\.([a-z0-9]+)$/i)?.[1] || 'audio').toLowerCase();
+}
+
 function updateFileMeta() {
-  const duration = state.sourceBuffer ? formatTime(state.sourceBuffer.duration) : 'Unknown';
+  const previewLabel = state.waveformMode === 'decoded'
+    ? 'Decoded waveform preview'
+    : 'Lightweight chunk-sampled waveform preview';
+
   fileMeta.hidden = false;
   fileMeta.innerHTML = `
     <strong>${state.file.name}</strong>
-    <span>Duration: ${duration}</span>
+    <span>Duration: ${state.duration ? formatTime(state.duration) : 'Metadata unavailable'}</span>
     <span>Size: ${formatBytes(state.file.size)}</span>
+    <span>${previewLabel}</span>
   `;
 }
 
+function updateWarnings() {
+  const warnings = [];
+  const previewLimit = getPreviewLimit();
+
+  if (state.file.size > previewLimit) {
+    warnings.push(`Large file mode is active. VolumeFlow avoids full decodeAudioData preview and samples file chunks for the waveform.`);
+  }
+  if (isMobileBrowser() && state.file.size > MOBILE_PREVIEW_LIMIT) {
+    warnings.push('Mobile browsers can have strict memory limits. Close other tabs before processing long audio.');
+  }
+  if (state.file.size > LARGE_FILE_WARNING) {
+    warnings.push('Very large files may require several minutes while FFmpeg loads, analyzes, and exports in the worker.');
+  }
+  if (state.duration > LONG_DURATION_WARNING) {
+    warnings.push('Long audio detected. Keep this tab open and your screen awake during export.');
+  }
+  if (!window.crossOriginIsolated) {
+    warnings.push('Single-thread FFmpeg mode will be used because this page is not cross-origin isolated.');
+  }
+
+  fileWarnings.hidden = warnings.length === 0;
+  fileWarnings.innerHTML = warnings.map((warning) => `<li>${warning}</li>`).join('');
+}
+
+function supportedAudioFile(file) {
+  return Boolean(file && (file.type.startsWith('audio/') || /\.(mp3|wav|flac|m4a|aac|ogg|opus)$/i.test(file.name)));
+}
+
 async function handleFile(file) {
-  const supportedExtension = /\.(mp3|wav|flac|m4a|aac|ogg|opus)$/i.test(file?.name || '');
-  if (!file || (!file.type.startsWith('audio/') && !supportedExtension)) {
-    alert('Please choose a browser-supported audio file.');
+  if (!supportedAudioFile(file)) {
+    alert('Please choose a supported audio file: MP3, WAV, M4A, AAC, FLAC, OGG, or OPUS.');
     return;
   }
 
   resetOutputOnly();
   state.file = file;
-  setStatus(0, 12);
+  state.sourceBuffer = null;
+  state.duration = 0;
+  state.waveform = [];
+  state.waveformMode = 'none';
+  setStatus('Reading local file metadata', 8);
 
   try {
-    const arrayBuffer = await file.arrayBuffer();
-    const decoded = await getAudioContext().decodeAudioData(arrayBuffer.slice(0));
-    state.sourceBuffer = decoded;
-    state.selection = getDefaultSelection(decoded.duration);
-    state.waveform = buildWaveform(decoded, 900);
+    state.duration = await readDurationFromMetadata(file);
+  } catch (error) {
+    console.warn('Duration metadata unavailable:', error);
+    state.duration = 0;
+  }
+
+  try {
+    await prepareWaveform(file);
+    if (!state.duration && state.sourceBuffer) state.duration = state.sourceBuffer.duration;
+    if (!state.duration) state.duration = estimateDurationFromFileSize(file);
+
+    state.selection = getDefaultSelection(state.duration);
     updateFileMeta();
+    updateWarnings();
     modeSection.classList.remove('is-disabled');
     referencePanel.classList.remove('is-disabled');
     automaticPanel.classList.remove('is-disabled');
@@ -113,18 +171,68 @@ async function handleFile(file) {
     updateSelectionReadout();
   } catch (error) {
     console.error(error);
-    statusText.textContent = 'Could not decode this audio file. Try another format or a different browser.';
-    progressBar.style.width = '0%';
+    setStatus(memoryFriendlyError(error), 0);
   }
 }
 
+function readDurationFromMetadata(file) {
+  return new Promise((resolve, reject) => {
+    const audio = document.createElement('audio');
+    const url = URL.createObjectURL(file);
+    const cleanup = () => {
+      audio.removeAttribute('src');
+      URL.revokeObjectURL(url);
+    };
+    audio.preload = 'metadata';
+    audio.onloadedmetadata = () => {
+      const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
+      cleanup();
+      resolve(duration);
+    };
+    audio.onerror = () => {
+      cleanup();
+      reject(new Error('Browser could not read duration metadata.'));
+    };
+    audio.src = url;
+  });
+}
+
+async function prepareWaveform(file) {
+  const previewLimit = getPreviewLimit();
+
+  if (file.size <= previewLimit) {
+    try {
+      setStatus('Decoding small file for detailed waveform preview', 14);
+      const arrayBuffer = await file.arrayBuffer();
+      const decoded = await getAudioContext().decodeAudioData(arrayBuffer.slice(0));
+      state.duration = state.duration || decoded.duration;
+      state.waveform = buildWaveformFromBuffer(decoded, 900);
+      state.sourceBuffer = null;
+      state.waveformMode = 'decoded';
+      return;
+    } catch (error) {
+      console.warn('Detailed decode failed; falling back to lightweight waveform.', error);
+    }
+  }
+
+  setStatus('Sampling file chunks for lightweight waveform preview', 18);
+  state.waveform = await buildWaveformFromFileChunks(file, 900);
+  state.waveformMode = 'chunked';
+}
+
+function estimateDurationFromFileSize(file) {
+  const assumedBytesPerSecond = 24_000;
+  return Math.max(30, file.size / assumedBytesPerSecond);
+}
+
 function getDefaultSelection(duration) {
-  const start = Math.max(0, duration * 0.2);
-  const end = Math.min(duration, start + Math.max(3, duration * 0.18));
+  const safeDuration = Math.max(1, duration || 1);
+  const start = Math.max(0, safeDuration * 0.2);
+  const end = Math.min(safeDuration, start + Math.max(3, safeDuration * 0.18));
   return { start, end };
 }
 
-function buildWaveform(buffer, buckets) {
+function buildWaveformFromBuffer(buffer, buckets) {
   const channelCount = buffer.numberOfChannels;
   const samplesPerBucket = Math.max(1, Math.floor(buffer.length / buckets));
   const peaks = [];
@@ -143,12 +251,37 @@ function buildWaveform(buffer, buckets) {
     peaks.push(max);
   }
 
+  return normalizePeaks(peaks);
+}
+
+async function buildWaveformFromFileChunks(file, buckets) {
+  const peaks = [];
+  const bytesPerBucket = Math.max(1, Math.floor(file.size / buckets));
+  const sampleBytesPerBucket = 256;
+
+  for (let bucket = 0; bucket < buckets; bucket++) {
+    const start = bucket * bytesPerBucket;
+    const end = Math.min(file.size, start + sampleBytesPerBucket);
+    const slice = await file.slice(start, end).arrayBuffer();
+    const bytes = new Uint8Array(slice);
+    let sum = 0;
+
+    for (const byte of bytes) {
+      sum += Math.abs(byte - 128) / 128;
+    }
+    peaks.push(bytes.length ? sum / bytes.length : 0.05);
+  }
+
+  return normalizePeaks(peaks).map((peak) => Math.max(0.08, peak));
+}
+
+function normalizePeaks(peaks) {
   const largest = Math.max(...peaks, 0.001);
   return peaks.map((peak) => peak / largest);
 }
 
 function drawWaveform() {
-  if (!state.sourceBuffer) return;
+  if (!state.waveform.length || !state.duration) return;
 
   const { width, height } = canvas;
   const center = height / 2;
@@ -187,11 +320,11 @@ function drawHandle(x) {
 function xToTime(x) {
   const rect = canvas.getBoundingClientRect();
   const relative = Math.min(Math.max(0, x - rect.left), rect.width);
-  return (relative / rect.width) * state.sourceBuffer.duration;
+  return (relative / rect.width) * state.duration;
 }
 
 function timeToX(time) {
-  return (time / state.sourceBuffer.duration) * canvas.width;
+  return (time / Math.max(0.001, state.duration)) * canvas.width;
 }
 
 function updateSelectionReadout() {
@@ -203,9 +336,9 @@ function updateSelectionReadout() {
 }
 
 function startSelectionDrag(event) {
-  if (!state.sourceBuffer) return;
+  if (!state.duration) return;
   const time = xToTime(event.clientX);
-  const handleThreshold = state.sourceBuffer.duration * 0.025;
+  const handleThreshold = state.duration * 0.025;
 
   if (Math.abs(time - state.selection.start) < handleThreshold) {
     state.dragMode = 'start';
@@ -221,7 +354,7 @@ function startSelectionDrag(event) {
 }
 
 function updateSelectionDrag(event) {
-  if (!state.dragMode || !state.sourceBuffer) return;
+  if (!state.dragMode || !state.duration) return;
   const time = xToTime(event.clientX);
   const minimum = 0.25;
 
@@ -238,7 +371,7 @@ function updateSelectionDrag(event) {
   }
 
   state.selection.start = Math.max(0, state.selection.start);
-  state.selection.end = Math.min(state.sourceBuffer.duration, state.selection.end);
+  state.selection.end = Math.min(state.duration, state.selection.end);
   drawWaveform();
   updateSelectionReadout();
 }
@@ -248,161 +381,107 @@ function stopSelectionDrag(event) {
   state.dragMode = null;
 }
 
-function calculateRmsForRange(channels, startSample, endSample) {
-  let sum = 0;
-  let count = 0;
-  for (const data of channels) {
-    for (let i = startSample; i < endSample; i++) {
-      sum += data[i] * data[i];
-      count++;
-    }
+function getWorker() {
+  if (!state.worker) {
+    state.worker = new Worker('ffmpeg-worker.js');
+    state.worker.addEventListener('message', handleWorkerMessage);
+    state.worker.addEventListener('error', (event) => {
+      state.processing = false;
+      setStatus(memoryFriendlyError(event.error || event.message), 0);
+      enableProcessingButtons();
+    });
   }
-  return Math.sqrt(sum / Math.max(1, count));
-}
-
-function makeGainEnvelope(buffer, targetRms, smoothingAmount) {
-  const windowSeconds = 0.1;
-  const windowSize = Math.max(128, Math.floor(buffer.sampleRate * windowSeconds));
-  const channelData = Array.from({ length: buffer.numberOfChannels }, (_, channel) => buffer.getChannelData(channel));
-  const envelope = new Float32Array(Math.ceil(buffer.length / windowSize));
-  let smoothedGain = 1;
-  const smoothing = Math.min(0.96, Math.max(0.05, smoothingAmount));
-
-  for (let windowIndex = 0; windowIndex < envelope.length; windowIndex++) {
-    const start = windowIndex * windowSize;
-    const end = Math.min(buffer.length, start + windowSize);
-    const rms = calculateRmsForRange(channelData, start, end);
-    const rawGain = rms > 0.00001 ? targetRms / rms : 1;
-    const limitedGain = Math.min(4, Math.max(0.2, rawGain));
-    smoothedGain = smoothedGain * smoothing + limitedGain * (1 - smoothing);
-    envelope[windowIndex] = smoothedGain;
-  }
-
-  return { envelope, windowSize };
-}
-
-function processBuffer(mode) {
-  const source = state.sourceBuffer;
-  const channels = Array.from({ length: source.numberOfChannels }, (_, channel) => source.getChannelData(channel));
-  let targetRms;
-
-  if (mode === 'reference') {
-    const startSample = Math.floor(state.selection.start * source.sampleRate);
-    const endSample = Math.floor(state.selection.end * source.sampleRate);
-    targetRms = calculateRmsForRange(channels, startSample, endSample);
-  } else {
-    const desired = parseFloat(targetLoudness.value);
-    const wholeRms = calculateRmsForRange(channels, 0, source.length);
-    targetRms = Math.min(0.24, Math.max(0.08, wholeRms * 0.35 + desired * 0.65));
-  }
-
-  const smoothingAmount = mode === 'reference' ? 0.72 : parseFloat(smoothness.value);
-  const { envelope, windowSize } = makeGainEnvelope(source, Math.max(0.025, targetRms), smoothingAmount);
-  const processed = getAudioContext().createBuffer(source.numberOfChannels, source.length, source.sampleRate);
-  let peak = 0;
-
-  for (let channel = 0; channel < source.numberOfChannels; channel++) {
-    const input = source.getChannelData(channel);
-    const output = processed.getChannelData(channel);
-    for (let sample = 0; sample < source.length; sample++) {
-      const gainIndex = Math.min(envelope.length - 1, Math.floor(sample / windowSize));
-      const nextGain = envelope[Math.min(envelope.length - 1, gainIndex + 1)];
-      const progress = (sample % windowSize) / windowSize;
-      const gain = envelope[gainIndex] * (1 - progress) + nextGain * progress;
-      output[sample] = input[sample] * gain;
-      peak = Math.max(peak, Math.abs(output[sample]));
-    }
-  }
-
-  if (peakProtection.checked || peak > 0.98) {
-    applyLimiter(processed, Math.max(peak, 0.001));
-  }
-
-  return processed;
-}
-
-function applyLimiter(buffer, peak) {
-  const ceiling = 0.97;
-  const makeup = peak > ceiling ? ceiling / peak : 1;
-
-  for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
-    const data = buffer.getChannelData(channel);
-    let previous = 0;
-    for (let i = 0; i < data.length; i++) {
-      const driven = data[i] * makeup;
-      const limited = Math.tanh(driven * 1.25) / Math.tanh(1.25);
-      previous = previous * 0.08 + limited * 0.92;
-      data[i] = Math.max(-ceiling, Math.min(ceiling, previous));
-    }
-  }
-}
-
-function audioBufferToWav(buffer) {
-  const channelCount = buffer.numberOfChannels;
-  const sampleRate = buffer.sampleRate;
-  const bytesPerSample = 2;
-  const blockAlign = channelCount * bytesPerSample;
-  const dataSize = buffer.length * blockAlign;
-  const wav = new ArrayBuffer(44 + dataSize);
-  const view = new DataView(wav);
-  let offset = 0;
-
-  const writeString = (value) => {
-    for (let i = 0; i < value.length; i++) view.setUint8(offset++, value.charCodeAt(i));
-  };
-
-  writeString('RIFF');
-  view.setUint32(offset, 36 + dataSize, true); offset += 4;
-  writeString('WAVE');
-  writeString('fmt ');
-  view.setUint32(offset, 16, true); offset += 4;
-  view.setUint16(offset, 1, true); offset += 2;
-  view.setUint16(offset, channelCount, true); offset += 2;
-  view.setUint32(offset, sampleRate, true); offset += 4;
-  view.setUint32(offset, sampleRate * blockAlign, true); offset += 4;
-  view.setUint16(offset, blockAlign, true); offset += 2;
-  view.setUint16(offset, bytesPerSample * 8, true); offset += 2;
-  writeString('data');
-  view.setUint32(offset, dataSize, true); offset += 4;
-
-  for (let sample = 0; sample < buffer.length; sample++) {
-    for (let channel = 0; channel < channelCount; channel++) {
-      const value = Math.max(-1, Math.min(1, buffer.getChannelData(channel)[sample]));
-      view.setInt16(offset, value < 0 ? value * 0x8000 : value * 0x7fff, true);
-      offset += 2;
-    }
-  }
-
-  return new Blob([view], { type: 'audio/wav' });
+  return state.worker;
 }
 
 async function runProcessing(mode) {
-  if (!state.sourceBuffer) return;
+  if (!state.file || state.processing) return;
+
+  state.processing = true;
   setStep('process');
   resultSection.hidden = true;
-  setStatus(1, 30);
+  disableProcessingButtons();
+  setStatus('Preparing local file for FFmpeg worker', 5);
 
-  await waitForPaint();
-  setStatus(2, 52);
-  const processed = processBuffer(mode);
-
-  await waitForPaint();
-  setStatus(3, 78);
-  const blob = audioBufferToWav(processed);
-
-  if (state.activeObjectUrl) URL.revokeObjectURL(state.activeObjectUrl);
-  state.activeObjectUrl = URL.createObjectURL(blob);
-  previewPlayer.src = state.activeObjectUrl;
-  downloadBtn.href = state.activeObjectUrl;
-  downloadBtn.download = `${state.file.name.replace(/\.[^.]+$/, '') || 'volumeflow'}-leveled.wav`;
-
-  setStatus(4, 100);
-  resultSection.hidden = false;
-  resultSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  try {
+    getWorker().postMessage({
+      type: 'process',
+      payload: {
+        mode,
+        file: state.file,
+        fileName: state.file.name,
+        extension: getExtension(state.file),
+        outputFormat: outputFormat.value,
+        selection: state.selection,
+        duration: state.duration,
+        automatic: {
+          targetLoudness: Number(targetLoudness.value),
+          filter: ffmpegFilter.value,
+          peakProtection: peakProtection.checked,
+        },
+      },
+    });
+  } catch (error) {
+    state.processing = false;
+    setStatus(memoryFriendlyError(error), 0);
+    enableProcessingButtons();
+  }
 }
 
-function waitForPaint() {
-  return new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 40)));
+function handleWorkerMessage(event) {
+  const { type, payload } = event.data;
+
+  if (type === 'progress') {
+    setStatus(payload.message, payload.progress);
+    return;
+  }
+
+  if (type === 'done') {
+    state.processing = false;
+    const mimeType = payload.format === 'mp3' ? 'audio/mpeg' : 'audio/wav';
+    const blob = new Blob([payload.data], { type: mimeType });
+
+    if (state.activeObjectUrl) URL.revokeObjectURL(state.activeObjectUrl);
+    state.activeObjectUrl = URL.createObjectURL(blob);
+    previewPlayer.src = state.activeObjectUrl;
+    downloadBtn.href = state.activeObjectUrl;
+    downloadBtn.download = `${state.file.name.replace(/\.[^.]+$/, '') || 'volumeflow'}-leveled.${payload.format}`;
+    downloadBtn.textContent = `Download ${payload.format.toUpperCase()}`;
+
+    setStatus('Ready to download', 100);
+    resultSection.hidden = false;
+    resultSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    enableProcessingButtons();
+    return;
+  }
+
+  if (type === 'error') {
+    state.processing = false;
+    setStatus(memoryFriendlyError(payload.message), 0);
+    enableProcessingButtons();
+  }
+}
+
+function disableProcessingButtons() {
+  referenceProcessBtn.disabled = true;
+  autoProcessBtn.disabled = true;
+}
+
+function enableProcessingButtons() {
+  if (!state.file) return;
+  referenceProcessBtn.disabled = false;
+  autoProcessBtn.disabled = false;
+}
+
+function memoryFriendlyError(error) {
+  const message = String(error?.message || error || 'Unknown processing error.');
+  if (/memory|allocation|out of bounds|ArrayBuffer|abort/i.test(message)) {
+    return 'This browser ran out of memory while processing. Try WAV output, close other tabs, use a desktop browser, or split the audio into smaller parts.';
+  }
+  if (/SharedArrayBuffer|cross-origin|wasm/i.test(message)) {
+    return 'FFmpeg could not start in this browser context. Try a modern desktop browser or serve the page with the headers required by ffmpeg.wasm.';
+  }
+  return message;
 }
 
 function resetOutputOnly() {
@@ -414,13 +493,26 @@ function resetOutputOnly() {
   progressBar.style.width = '0%';
 }
 
+function terminateWorker() {
+  if (state.worker) {
+    state.worker.postMessage({ type: 'cleanup' });
+    state.worker.terminate();
+    state.worker = null;
+  }
+  state.processing = false;
+}
+
 function resetAll() {
   resetOutputOnly();
+  terminateWorker();
   state.file = null;
   state.sourceBuffer = null;
+  state.duration = 0;
   state.waveform = [];
+  state.waveformMode = 'none';
   fileInput.value = '';
   fileMeta.hidden = true;
+  fileWarnings.hidden = true;
   progressSection.hidden = true;
   modeSection.classList.add('is-disabled');
   referencePanel.classList.add('is-disabled');
@@ -460,5 +552,8 @@ canvas.addEventListener('pointercancel', stopSelectionDrag);
 referenceProcessBtn.addEventListener('click', () => runProcessing('reference'));
 autoProcessBtn.addEventListener('click', () => runProcessing('automatic'));
 resetBtn.addEventListener('click', resetAll);
-window.addEventListener('beforeunload', resetOutputOnly);
+window.addEventListener('beforeunload', () => {
+  resetOutputOnly();
+  terminateWorker();
+});
 window.addEventListener('resize', drawWaveform);
