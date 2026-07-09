@@ -1,0 +1,4 @@
+package com.motionlayer.export
+import androidx.compose.foundation.layout.*; import androidx.compose.material3.*; import androidx.compose.runtime.*; import androidx.compose.ui.Modifier; import androidx.compose.ui.platform.LocalContext; import androidx.compose.ui.unit.dp
+import com.motionlayer.data.MotionLayerProject; import kotlinx.coroutines.launch
+@Composable fun ExportScreen(project:MotionLayerProject){ val ctx= LocalContext.current; val scope= rememberCoroutineScope(); var progress by remember{ mutableFloatStateOf(0f)}; var msg by remember{ mutableStateOf("Ready to export MP4")}; Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement=Arrangement.spacedBy(16.dp)){ Text("Export MP4", style=MaterialTheme.typography.headlineSmall); LinearProgressIndicator(progress={progress}); Text(msg); Button({ scope.launch{ msg="Exporting..."; val r=VideoExporter(ctx).exportVideo(project){progress=it}; msg=r.getOrElse{it}.toString() } }){Text("Save MP4 to device")} } }
