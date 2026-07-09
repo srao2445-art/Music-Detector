@@ -1,0 +1,5 @@
+package com.motionlayer.editor
+import androidx.compose.foundation.layout.*; import androidx.compose.material3.*; import androidx.compose.runtime.*; import androidx.compose.ui.Modifier; import androidx.compose.ui.unit.dp
+import com.motionlayer.data.Layer
+@Composable fun PropertyPanel(layer:Layer?, vm:EditorViewModel){ if(layer==null){ Text("Select a layer to edit", color=MaterialTheme.colorScheme.onSurfaceVariant); return }; Column(Modifier.padding(8.dp)){ Text(layer.name); Prop("X",layer.x,0f,1080f){vm.updateLayerTransform(x=it)}; Prop("Y",layer.y,0f,1920f){vm.updateLayerTransform(y=it)}; Prop("Scale",layer.scaleX,.1f,3f){vm.updateLayerTransform(scale=it)}; Prop("Rotation Z",layer.rotationZ,-180f,180f){vm.updateLayerTransform(rotZ=it)}; Prop("Opacity",layer.opacity,0f,1f){vm.updateLayerTransform(opacity=it)}; KeyframePanel(vm) } }
+@Composable private fun Prop(label:String,value:Float,min:Float,max:Float,onChange:(Float)->Unit){ Text("$label ${"%.2f".format(value)}"); Slider(value=value.coerceIn(min,max), onValueChange=onChange, valueRange=min..max) }
